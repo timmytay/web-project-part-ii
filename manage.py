@@ -3,7 +3,6 @@
 import os
 import sys
 
-
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
@@ -17,6 +16,14 @@ def main():
         ) from exc
     execute_from_command_line(sys.argv)
 
-
 if __name__ == '__main__':
     main()
+
+# проект, колонка, задача, коммент, учет времени
+# колонка -> проект
+# задача -> колонка
+# коммент -> задание
+# коммент -> юзер
+# время -> задание
+# время -> юзер
+# проект -> юзер

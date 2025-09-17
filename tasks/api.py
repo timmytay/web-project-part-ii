@@ -2,15 +2,15 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework import mixins, viewsets
 
 
-from students.models import Student
-from students.serializers import StudentSerializer
+from tasks.models import Task
+from tasks.serializers import TaskSerializer
 
-class StudentsViewset(
+class TasksViewset(
     mixins.CreateModelMixin,
     mixins.UpdateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
     GenericViewSet
 ):
-    queryset = Student.objects.all()
-    serializer_class = StudentSerializer
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
