@@ -16,6 +16,7 @@ const taskToEditOriginal = ref(null);
 const removeImageFlag = ref(false); // Флаг для удаления изображения
 const imageViewUrl = ref('');
 const imageViewModal = ref(null);
+const stats = ref(null); // Добавляем статистику
 
 const statusOptions = [
   { value: 'todo', label: 'К выполнению' },
@@ -48,6 +49,15 @@ async function fetchColumns() {
     columns.value = r.data;
   } catch (error) {
     console.error('Ошибка загрузки колонок:', error);
+  }
+}
+
+async function fetchStats() {
+  try {
+    const r = await axios.get("/api/tasks/stats/");
+    stats.value = r.data;
+  } catch (error) {
+    console.error('Ошибка загрузки статистики:', error);
   }
 }
 
@@ -139,7 +149,7 @@ async function onTaskAdd() {
     taskAddImageUrl.value = '';
     if (taskAddPictureRef.value) taskAddPictureRef.value.value = '';
     
-    await fetchTasks();
+    await Promise.all([fetchTasks(), fetchStats()]); // Обновляем и задачи и статистику
   } catch (error) {
     console.error('Ошибка добавления задачи:', error);
     alert('Ошибка при добавлении задачи');
@@ -194,7 +204,7 @@ async function onUpdateTask() {
     
     if (taskEditPictureRef.value) taskEditPictureRef.value.value = '';
     
-    await fetchTasks();
+    await Promise.all([fetchTasks(), fetchStats()]); // Обновляем и задачи и статистику
   } catch (error) {
     console.error('Ошибка обновления задачи:', error);
     alert('Ошибка при обновлении задачи');
@@ -205,7 +215,7 @@ async function onRemoveClick(task) {
   if (confirm('Вы уверены, что хотите удалить задачу?')) {
     try {
       await axios.delete(`/api/tasks/${task.id}/`);
-      await fetchTasks();
+      await Promise.all([fetchTasks(), fetchStats()]); // Обновляем и задачи и статистику
     } catch (error) {
       console.error('Ошибка удаления задачи:', error);
       alert('Ошибка при удалении задачи');
@@ -248,7 +258,7 @@ function resetEditModal() {
 }
 
 onBeforeMount(async () => {
-  await Promise.all([fetchTasks(), fetchColumns()]);
+  await Promise.all([fetchTasks(), fetchColumns(), fetchStats()]);
 });
 </script>
 
@@ -346,6 +356,21 @@ onBeforeMount(async () => {
           </div>
         </div>
       </form>
+
+      <!-- Статистика -->
+      <div class="mb-4" v-if="stats">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <div class="text-muted small">Всего задач</div>
+            <div class="h4 mb-0">{{ stats.count }}</div>
+          </div>
+          <div class="vr me-3"></div>
+          <div>
+            <div class="text-muted small">Показано на странице</div>
+            <div class="h4 mb-0">{{ tasks.length }}</div>
+          </div>
+        </div>
+      </div>
 
       <!-- Список задач -->
       <div v-if="loading" class="text-center">
@@ -628,5 +653,12 @@ onBeforeMount(async () => {
 
 #imageViewModal {
   z-index: 1060;
+}
+
+/* Стили для блока статистики */
+.vr {
+  width: 1px;
+  height: 2.5rem;
+  background-color: #dee2e6;
 }
 </style>

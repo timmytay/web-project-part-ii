@@ -87,7 +87,6 @@ class TaskSerializer(serializers.ModelSerializer):
     assignee_name = serializers.CharField(source='assignee.username', read_only=True, allow_null=True)
     
     def create(self, validated_data):
-        # Автоматически добавляем создателя задачи
         if 'request' in self.context:
             validated_data['creator'] = self.context['request'].user
         return super().create(validated_data)
