@@ -32,7 +32,13 @@ const router = createRouter({
       path: "/time-tracking",
       name: "TimeTrackingView",
       component: TimeTrackingView
-    }
+    },
+    //     {
+    //   path: "/users",
+    //   name: "UsersView",
+    //   component: UsersView,
+    //   props: route => ({ role: route.query.role || "" }),
+    // },
   ],
 })
 

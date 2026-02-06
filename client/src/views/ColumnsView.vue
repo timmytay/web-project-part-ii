@@ -54,25 +54,37 @@ onBeforeMount(async () => {
   await fetchColumns();
   await fetchProjects();
 })
-
 </script>
+
 <template>
   <div class="container-fluid">
     <div class="p-2">
-      <form @submit.prevent.stop ="onColumnAdd">
+      <!-- Форма добавления -->
+      <form @submit.prevent.stop="onColumnAdd">
         <div class="row">
           <div class="col">
             <div class="form-floating">
-              <input type="text" class="form-control" v-model="ColumnToAdd.name" required>
-              <label for="floatingInput">Название</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="addColumnName"
+                v-model="ColumnToAdd.name" 
+                required
+              >
+              <label for="addColumnName">Название</label>
             </div>
           </div>
           <div class="col-auto">
             <div class="form-floating">
-              <select class="form-select" v-model="ColumnToAdd.project" required>
+              <select 
+                class="form-select" 
+                id="addColumnProject"
+                v-model="ColumnToAdd.project" 
+                required
+              >
                 <option :value="p.id" v-for="p in projects">{{ p.name }}</option>
               </select>
-              <label for="floatingInput">Проект</label>
+              <label for="addColumnProject">Проект</label>
             </div>
           </div>
           <div class="col-auto">
@@ -81,55 +93,72 @@ onBeforeMount(async () => {
         </div>
       </form>
 
-
+      <!-- Список колонок -->
       <div>
         <div v-for="item in columns" class="column-item">
           <div>{{ item.name }}</div>
           <div>{{ projectsByID[item.project]?.name }}</div>
-          <button type="button" class="btn btn-success" @click="onColumnEditClick(item)" data-bs-toggle="modal"
-            data-bs-target="#editColumnModal">
+          <button 
+            type="button" 
+            class="btn btn-success" 
+            @click="onColumnEditClick(item)" 
+            data-bs-toggle="modal"
+            data-bs-target="#editColumnModal"
+          >
             <i class="bi bi-pencil"></i>
           </button>
-          <button class="btn btn-danger" @click="onRemoveClick(item)"><i class="bi bi-x"></i>
+          <button class="btn btn-danger" @click="onRemoveClick(item)">
+            <i class="bi bi-x"></i>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Модальное окно редактирования -->
     <div class="modal fade" id="editColumnModal" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Редактировать колонку</h5>
-            <!-- Изменено: data-bs-dismiss -->
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <div class="row">
               <div class="col">
                 <div class="form-floating">
-                  <input type="text" class="form-control" v-model="ColumnToEdit.name">
-                  <label for="floatingInput">Название</label>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="editColumnName"
+                    v-model="ColumnToEdit.name"
+                  >
+                  <label for="editColumnName">Название</label>
                 </div>
               </div>
               <div class="col-auto">
                 <div class="form-floating">
-                  <select class="form-select" v-model="ColumnToEdit.project">
+                  <select 
+                    class="form-select" 
+                    id="editColumnProject"
+                    v-model="ColumnToEdit.project"
+                  >
                     <option :value="p.id" v-for="p in projects">{{ p.name }}</option>
                   </select>
-                  <label for="floatingInput">Проект</label>
+                  <label for="editColumnProject">Проект</label>
                 </div>
               </div>
             </div>
-
-
           </div>
           <div class="modal-footer">
-            <!-- Изменено: data-bs-dismiss -->
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal"
-              @click="onUpdateColumn">Сохранить</button>
+            <button 
+              type="button" 
+              class="btn btn-primary" 
+              data-bs-dismiss="modal"
+              @click="onUpdateColumn"
+            >
+              Сохранить
+            </button>
           </div>
         </div>
       </div>

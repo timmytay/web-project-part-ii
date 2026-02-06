@@ -1,9 +1,14 @@
 from django.db import models
+from django.conf import settings 
+from django.dispatch import receiver 
+from django.db.models.signals import post_save
+from django.contrib.auth.models import User
 
 class Project(models.Model):
     name = models.CharField("Название", max_length=255)
     description = models.TextField("Описание", blank=True)
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
+    user = models.ForeignKey("auth.User", verbose_name="Пользователь", on_delete=models.CASCADE, null=True)
 
     class Meta:
         verbose_name = "Проект"
@@ -50,6 +55,12 @@ class Task(models.Model):
 
     picture = models.ImageField("Изображение", null=True, upload_to="tasks")
 
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name="Создатель", null=True, blank=True, related_name='created_tasks'
+    )
+    
+    assignee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name="Исполнитель", null=True, blank=True, related_name='assigned_tasks'
+    )
+
     class Meta:
         verbose_name = "Задача"
         verbose_name_plural = "Задачи"
@@ -69,6 +80,9 @@ class Comment(models.Model):
         verbose_name_plural = "Комментарии"
         ordering = ['created_at']
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Автор", related_name="comments",null=True, blank=True)
+
     def __str__(self):
         return f"Комментарий к задаче {self.task.title}"
 
@@ -82,5 +96,38 @@ class TimeTracking(models.Model):
         verbose_name = "Учет времени"
         verbose_name_plural = "Учет времени"
 
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Пользователь", related_name="time_trackings", null=True, blank=True)
+
     def __str__(self):
         return f"Время по задаче {self.task.title}"
+    
+class TimestampModel(models.Model):
+    created_at = models.DateTimeField(auto_created=True, auto_now_add=True,null=True)
+    updated_at = models.DateTimeField(auto_now_add=True,null=True)
+    
+    class Meta:
+        abstract = True
+
+class UserProfile(TimestampModel):
+    class Type(models.TextChoices):
+        ADMIN = 'admin', 'Администратор'
+        MANAGER = 'manager', 'Менеджер проекта'
+        DEVELOPER = 'developer', 'Разработчик'
+        VIEWER = 'viewer', 'Наблюдатель'
+    
+    name = models.TextField(null=True)
+    birthday = models.DateField(null=True)
+    user = models.OneToOneField("auth.User", on_delete=models.CASCADE)
+    type = models.TextField(choices=Type, null=True)
+        
+    class Meta:
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
+
+    def str(self) -> str: 
+        return f"{self.name} ({self.get_role_display()})"
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)

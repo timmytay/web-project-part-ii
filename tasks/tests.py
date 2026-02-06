@@ -16,7 +16,7 @@ class APIDiscoveryTests(TestCase):
         self.client.force_authenticate(user=self.user)
 
     def test_api_endpoints_exist(self):
-        """Проверяем существование эндпоинтов"""
+        """Проверка на наличие эндпоинтов"""
         endpoints = [
             '/api/projects/',
             '/api/columns/', 
@@ -32,7 +32,7 @@ class APIDiscoveryTests(TestCase):
             self.assertIn(response.status_code, [200, 404, 403])
 
 class SimpleProjectTests(TestCase):
-    """Простые тесты для Project"""
+    """Тесты для Project"""
     
     def setUp(self):
         self.client = APIClient()
@@ -43,15 +43,12 @@ class SimpleProjectTests(TestCase):
         self.client.force_authenticate(user=self.user)
 
     def test_create_project_simple(self):
-        """Простой тест создания проекта"""
-        # Пробуем разные варианты данных в зависимости от реальной модели
+        """Тест создания проекта"""
         test_data = {'name': 'Simple Project'}
         
-        # Добавляем description если поле существует
         if hasattr(Project, 'description'):
             test_data['description'] = 'Simple description'
             
-        # Добавляем owner если поле существует
         if hasattr(Project, 'owner'):
             test_data['owner'] = self.user.id
             
@@ -60,12 +57,11 @@ class SimpleProjectTests(TestCase):
         print(f"Status: {response.status_code}")
         print(f"Data: {response.data}")
         
-        # Если 400, смотрим ошибки
         if response.status_code == 400:
             print(f"Errors: {response.data}")
 
 class SimpleCommentTests(TestCase):
-    """Простые тесты для Comment"""
+    """Тесты для Comment"""
     
     def setUp(self):
         self.client = APIClient()
@@ -74,7 +70,6 @@ class SimpleCommentTests(TestCase):
             password='testpass123'
         )
         
-        # Создаем проект
         try:
             self.project = Project.objects.create(
                 name="Test Project", 
@@ -95,7 +90,7 @@ class SimpleCommentTests(TestCase):
         self.client.force_authenticate(user=self.user)
 
     def test_create_comment_simple(self):
-        """Простой тест создания комментария"""
+        """Тест создания комментария"""
         response = self.client.post('/api/comments/', {
             'task': self.task.id,
             'text': 'Simple comment'
@@ -118,7 +113,6 @@ class RealDataTests(TestCase):
         )
         self.client.force_authenticate(user=self.user)
         
-        # Создаем данные напрямую через ORM
         try:
             self.project = Project.objects.create(
                 name="Real Project", 
@@ -167,7 +161,7 @@ class RealDataTests(TestCase):
                 print(f"Tasks count: {len(response.data)}")
 
     def test_try_create_comment(self):
-        """Пробуем создать комментарий к существующей задаче"""
+        """Создание комментария к существующей задаче"""
         response = self.client.post('/api/comments/', {
             'task': self.task.id,
             'text': 'Real comment text'
@@ -180,7 +174,7 @@ class RealDataTests(TestCase):
             print(f"Comment created: {response.data}")
 
     def test_try_create_timetracking(self):
-        """Пробуем создать учет времени"""
+        """Создание учета времени"""
         response = self.client.post('/api/timetracking/', {
             'task': self.task.id,
             'start_time': timezone.now().isoformat(),

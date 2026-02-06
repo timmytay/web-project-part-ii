@@ -1,10 +1,17 @@
 <script setup>
-import { onBeforeMount } from 'vue';
+import { ref, onBeforeMount } from 'vue';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+
+const userInfo = ref({});
+
+onBeforeMount(async () => {
+  const r = await axios.get("/api/users/my/")
+  userInfo.value = r.data;
+})
 
 const goToAdmin = () => {
   window.open('/admin', '_blank')
@@ -15,12 +22,10 @@ onBeforeMount(() => {
 })
 </script>
 
-
-
 <template>
   <div class="container">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="/">Task Manager</a>
+      <a class="navbar-brand" href="/">управление задачами</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
         aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -63,6 +68,5 @@ onBeforeMount(() => {
 </template>
 
 <style>
-/* Добавьте Bootstrap Icons если их еще нет */
 @import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css");
 </style>

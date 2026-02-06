@@ -1,3 +1,11 @@
+# ========== DJANGO ==========
+.venv/
+__pycache__/
+*.pyc
+media/
+db.sqlite3
+.env
+
 # Logs
 logs
 *.log

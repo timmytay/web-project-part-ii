@@ -3,18 +3,15 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
-// ТОЛЬКО ОДИН импорт Bootstrap CSS
-import 'bootstrap/dist/css/bootstrap.min.css'
+import "bootstrap/dist/css/bootstrap.min.css"
+import "bootstrap/dist/js/bootstrap"
 
-// ТОЛЬКО ОДИН импорт Bootstrap Icons
-import 'bootstrap-icons/font/bootstrap-icons.css'
+import "bootstrap-icons/font/bootstrap-icons.css"
 
-// Импортируем Bootstrap JavaScript КАК МОДУЛЬ
 import * as bootstrap from 'bootstrap'
 
 const app = createApp(App)
 
-// Делаем Bootstrap доступным глобально во всех компонентах
 app.config.globalProperties.$bootstrap = bootstrap
 
 app.use(createPinia())
