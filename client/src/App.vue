@@ -47,9 +47,11 @@ onBeforeMount(() => {
           <li class="nav-item">
             <router-link class="nav-link" to="/time-tracking">Учет времени</router-link>
           </li>
+          <li class="nav-item">
+            <router-link class="nav-link" to="/users">Пользователи</router-link>
+          </li>
         </ul>
         
-        <!-- Кнопка входа в админку -->
         <div class="d-flex">
           <button 
             @click="goToAdmin" 

@@ -15,14 +15,14 @@ const projectsByID = computed(() => {
 
 async function fetchProjects() {
   const r = await axios.get("/api/projects/");
-  console.log(r.data)
+  // console.log(r.data)
   projects.value = r.data;
 }
 
 async function fetchColumns() {
   loading.value = true;
   const r = await axios.get("/api/columns/");
-  console.log(r.data)
+  // console.log(r.data)
   columns.value = r.data;
   loading.value = false;
 }
