@@ -1,3 +1,4 @@
+<!-- Columns.vue -->
 <script setup>
 import { computed, ref, onBeforeMount } from 'vue';
 import axios from 'axios';
@@ -8,6 +9,7 @@ const columns = ref([]);
 const projects = ref([]);
 const ColumnToAdd = ref({});
 const ColumnToEdit = ref({});
+const stats = ref(null); // Добавляем статистику
 
 const projectsByID = computed(() => {
   return _.keyBy(projects.value, x => x.id)
@@ -15,16 +17,23 @@ const projectsByID = computed(() => {
 
 async function fetchProjects() {
   const r = await axios.get("/api/projects/");
-  // console.log(r.data)
   projects.value = r.data;
 }
 
 async function fetchColumns() {
   loading.value = true;
   const r = await axios.get("/api/columns/");
-  // console.log(r.data)
   columns.value = r.data;
   loading.value = false;
+}
+
+async function fetchStats() {
+  try {
+    const r = await axios.get("/api/columns/stats/");
+    stats.value = r.data;
+  } catch (error) {
+    console.error('Ошибка загрузки статистики колонок:', error);
+  }
 }
 
 async function onColumnEditClick(column) {
@@ -35,32 +44,33 @@ async function onUpdateColumn() {
   await axios.put(`/api/columns/${ColumnToEdit.value.id}/`, {
     ...ColumnToEdit.value
   });
-  await fetchColumns();
+  await Promise.all([fetchColumns(), fetchStats()]);
 }
 
 async function onColumnAdd() {
   await axios.post("/api/columns/", {
     ...ColumnToAdd.value,
   });
-  await fetchColumns();
+  await Promise.all([fetchColumns(), fetchStats()]);
 }
 
 async function onRemoveClick(column) {
   await axios.delete(`/api/columns/${column.id}/`);
-  await fetchColumns();
+  await Promise.all([fetchColumns(), fetchStats()]);
 }
 
 onBeforeMount(async () => {
-  await fetchColumns();
-  await fetchProjects();
+  await Promise.all([fetchColumns(), fetchProjects(), fetchStats()]);
 })
 </script>
 
 <template>
   <div class="container-fluid">
     <div class="p-2">
+      <h2>Колонки</h2>
+
       <!-- Форма добавления -->
-      <form @submit.prevent.stop="onColumnAdd">
+      <form @submit.prevent.stop="onColumnAdd" class="mb-4">
         <div class="row">
           <div class="col">
             <div class="form-floating">
@@ -93,9 +103,18 @@ onBeforeMount(async () => {
         </div>
       </form>
 
-      <!-- Список колонок -->
-      <div>
-        <div v-for="item in columns" class="column-item">
+      <div v-if="stats" class="mb-3 text-muted small">
+        Всего колонок: <b>{{ stats.count }}</b>
+      </div>
+
+      <div v-if="loading" class="text-center">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Загрузка...</span>
+        </div>
+      </div>
+
+      <div v-else>
+        <div v-for="item in columns" class="column-item" :key="item.id">
           <div>{{ item.name }}</div>
           <div>{{ projectsByID[item.project]?.name }}</div>
           <button 

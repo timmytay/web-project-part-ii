@@ -13,9 +13,10 @@ const commentAddImageUrl = ref('');
 const commentEditPictureRef = ref(null);
 const commentEditImageUrl = ref('');
 const commentToEditOriginal = ref(null);
-const removeImageFlag = ref(false); // Флаг для удаления изображения - ДОБАВЛЕНО
+const removeImageFlag = ref(false);
 const imageViewUrl = ref('');
 const imageViewModal = ref(null);
+const stats = ref(null); // Добавляем статистику
 
 async function fetchComments() {
   try {
@@ -38,6 +39,15 @@ async function fetchTasks() {
   }
 }
 
+async function fetchStats() {
+  try {
+    const r = await axios.get("/api/comments/stats/");
+    stats.value = r.data;
+  } catch (error) {
+    console.error('Ошибка загрузки статистики комментариев:', error);
+  }
+}
+
 function commentsAddPictureChange() {
   if (commentsPictureRef.value.files[0]) {
     commentAddImageUrl.value = URL.createObjectURL(commentsPictureRef.value.files[0]);
@@ -49,7 +59,7 @@ function commentsAddPictureChange() {
 function commentsEditPictureChange() {
   if (commentEditPictureRef.value.files[0]) {
     commentEditImageUrl.value = URL.createObjectURL(commentEditPictureRef.value.files[0]);
-    removeImageFlag.value = false; // Сбрасываем флаг удаления если выбрано новое изображение - ДОБАВЛЕНО
+    removeImageFlag.value = false;
   } else {
     commentEditImageUrl.value = '';
   }
@@ -64,20 +74,16 @@ function openImageViewModal(imageUrl) {
     modalElement.style.display = 'block';
     modalElement.classList.add('show');
     
-    // Добавляем backdrop
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop fade show';
     backdrop.id = 'imageViewModalBackdrop';
     document.body.appendChild(backdrop);
     
-    // Обработчик закрытия по клику на backdrop
     backdrop.onclick = closeImageViewModal;
     
-    // Обработчик клавиши ESC
     const handleEsc = (e) => e.key === 'Escape' && closeImageViewModal();
     document.addEventListener('keydown', handleEsc);
     
-    // Сохраняем обработчики для очистки
     imageViewModal.value = { handleEsc };
   }
 }
@@ -123,7 +129,7 @@ async function onCommentAdd() {
     commentAddImageUrl.value = '';
     if (commentsPictureRef.value) commentsPictureRef.value.value = '';
     
-    await fetchComments();
+    await Promise.all([fetchComments(), fetchStats()]);
   } catch (error) {
     console.error('Ошибка добавления комментария:', error);
     alert('Ошибка при добавлении комментария');
@@ -133,9 +139,8 @@ async function onCommentAdd() {
 async function onCommentEditClick(comment) {
   commentToEdit.value = { ...comment };
   commentToEditOriginal.value = { ...comment };
-  // Устанавливаем текущее изображение в предпросмотр только если оно есть - ИЗМЕНЕНО
   commentEditImageUrl.value = comment.picture || '';
-  removeImageFlag.value = false; // Сбрасываем флаг удаления - ДОБАВЛЕНО
+  removeImageFlag.value = false;
   
   if (commentEditPictureRef.value) {
     commentEditPictureRef.value.value = '';
@@ -146,15 +151,11 @@ async function onUpdateComment() {
   try {
     const formData = new FormData();
     
-    // Обработка изображения - ИЗМЕНЕНО
     if (commentEditPictureRef.value.files[0]) {
-      // Загружено новое изображение
       formData.append('picture', commentEditPictureRef.value.files[0]);
     } else if (removeImageFlag.value && commentToEditOriginal.value?.picture) {
-      // Пользователь хочет удалить изображение
       formData.append('picture', '');
     }
-    // Если ничего не выбрано и флаг удаления не установлен - изображение не меняется
     
     formData.append('text', commentToEdit.value.text);
     formData.append('task', commentToEdit.value.task);
@@ -163,15 +164,14 @@ async function onUpdateComment() {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     
-    // Очищаем - ИЗМЕНЕНО
     commentEditImageUrl.value = '';
     commentToEdit.value = {};
     commentToEditOriginal.value = null;
-    removeImageFlag.value = false; // Сбрасываем флаг удаления
+    removeImageFlag.value = false;
     
     if (commentEditPictureRef.value) commentEditPictureRef.value.value = '';
     
-    await fetchComments();
+    await Promise.all([fetchComments(), fetchStats()]);
   } catch (error) {
     console.error('Ошибка обновления комментария:', error);
     alert('Ошибка при обновлении комментария');
@@ -182,7 +182,7 @@ async function onRemoveClick(comment) {
   if (confirm('Вы уверены, что хотите удалить комментарий?')) {
     try {
       await axios.delete(`/api/comments/${comment.id}/`);
-      await fetchComments();
+      await Promise.all([fetchComments(), fetchStats()]);
     } catch (error) {
       console.error('Ошибка удаления комментария:', error);
       alert('Ошибка при удалении комментария');
@@ -196,26 +196,23 @@ function removeAddPicture() {
 }
 
 function removeEditPicture() {
-  // Только очищаем загруженное изображение, не устанавливаем флаг удаления - ИЗМЕНЕНО
   commentEditImageUrl.value = '';
   if (commentEditPictureRef.value) commentEditPictureRef.value.value = '';
 }
 
 function removeExistingImage() {
-  // Устанавливаем флаг удаления и очищаем предпросмотр - ДОБАВЛЕНО
   removeImageFlag.value = true;
   commentEditImageUrl.value = '';
   if (commentEditPictureRef.value) commentEditPictureRef.value.value = '';
 }
 
-// Функция для сброса состояния при закрытии модального окна - ДОБАВЛЕНО
 function resetEditModal() {
   removeEditPicture();
   removeImageFlag.value = false;
 }
 
 onBeforeMount(async () => {
-  await Promise.all([fetchComments(), fetchTasks()]);
+  await Promise.all([fetchComments(), fetchTasks(), fetchStats()]);
 });
 </script>
 
@@ -223,6 +220,8 @@ onBeforeMount(async () => {
   <div class="container-fluid">
     <div class="p-2">
       <h2>Комментарии</h2>
+      
+
       
       <!-- Форма добавления -->
       <form @submit.prevent.stop="onCommentAdd" class="mb-4">
@@ -273,7 +272,10 @@ onBeforeMount(async () => {
           </div>
         </div>
       </form>
-
+      <!-- Статистика -->
+      <div v-if="stats" class="mb-3 text-muted small">
+        Всего комментариев: <strong>{{ stats.count }}</strong>
+      </div>
       <!-- Список комментариев -->
       <div v-if="loading" class="text-center">
         <div class="spinner-border" role="status">
@@ -333,7 +335,7 @@ onBeforeMount(async () => {
           </div>
           <div class="modal-body">
             <div class="row g-3">
-              <!-- Текущее изображение с кнопкой удаления - ИЗМЕНЕНО -->
+              <!-- Текущее изображение с кнопкой удаления -->
               <div class="col-12" v-if="commentToEdit.picture && !removeImageFlag">
                 <div class="text-center mb-3">
                   <div class="d-flex justify-content-between align-items-center mb-2">
@@ -371,7 +373,6 @@ onBeforeMount(async () => {
                   </div>
                 </div>
                 
-                <!-- Показываем только если выбрано новое изображение - ИЗМЕНЕНО -->
                 <div class="text-center mb-3" v-if="commentEditImageUrl && commentEditPictureRef?.files?.length">
                   <p class="text-muted mb-1">Предпросмотр нового изображения:</p>
                   <div class="position-relative d-inline-block">
@@ -384,7 +385,6 @@ onBeforeMount(async () => {
                 </div>
               </div>
               
-              <!-- Текст комментария -->
               <div class="col-12">
                 <div class="form-floating">
                   <textarea class="form-control" v-model="commentToEdit.text" 
@@ -393,7 +393,6 @@ onBeforeMount(async () => {
                 </div>
               </div>
               
-              <!-- Задача -->
               <div class="col-12">
                 <div class="form-floating">
                   <select class="form-select" v-model="commentToEdit.task" required>

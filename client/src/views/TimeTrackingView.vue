@@ -1,3 +1,4 @@
+<!-- TimeTracking.vue -->
 <script setup>
 import { ref, onBeforeMount } from 'vue';
 import axios from 'axios';
@@ -7,6 +8,7 @@ const timeTrackings = ref([]);
 const tasks = ref([]);
 const timeToAdd = ref({});
 const timeToEdit = ref({});
+const stats = ref(null); // Добавляем статистику
 
 async function fetchTimeTrackings() {
   try {
@@ -29,13 +31,22 @@ async function fetchTasks() {
   }
 }
 
+async function fetchStats() {
+  try {
+    const r = await axios.get("/api/timetracking/stats/");
+    stats.value = r.data;
+  } catch (error) {
+    console.error('Ошибка загрузки статистики учета времени:', error);
+  }
+}
+
 async function onTimeAdd() {
   try {
     await axios.post("/api/timetracking/", {
       ...timeToAdd.value,
     });
     timeToAdd.value = {};
-    await fetchTimeTrackings();
+    await Promise.all([fetchTimeTrackings(), fetchStats()]);
   } catch (error) {
     console.error('Ошибка добавления учета времени:', error);
   }
@@ -50,7 +61,7 @@ async function onUpdateTime() {
     await axios.put(`/api/timetracking/${timeToEdit.value.id}/`, {
       ...timeToEdit.value
     });
-    await fetchTimeTrackings();
+    await Promise.all([fetchTimeTrackings(), fetchStats()]);
   } catch (error) {
     console.error('Ошибка обновления учета времени:', error);
   }
@@ -60,7 +71,7 @@ async function onRemoveClick(timeTracking) {
   if (confirm('Вы уверены, что хотите удалить запись учета времени?')) {
     try {
       await axios.delete(`/api/timetracking/${timeTracking.id}/`);
-      await fetchTimeTrackings();
+      await Promise.all([fetchTimeTrackings(), fetchStats()]);
     } catch (error) {
       console.error('Ошибка удаления учета времени:', error);
     }
@@ -68,7 +79,7 @@ async function onRemoveClick(timeTracking) {
 }
 
 onBeforeMount(async () => {
-  await Promise.all([fetchTimeTrackings(), fetchTasks()]);
+  await Promise.all([fetchTimeTrackings(), fetchTasks(), fetchStats()]);
 })
 </script>
 
@@ -113,6 +124,10 @@ onBeforeMount(async () => {
           </div>
         </div>
       </form>
+            <!-- Статистика -->
+      <div v-if="stats" class="mb-3 text-muted small">
+        Всего записей учета времени: <strong>{{ stats.count }}</strong>
+      </div>
 
       <!-- Список учета времени -->
       <div v-if="loading" class="text-center">

@@ -1,3 +1,4 @@
+<!-- Projects.vue -->
 <script setup>
 import { ref, onBeforeMount } from 'vue';
 import axios from 'axios';
@@ -6,6 +7,7 @@ const loading = ref(false);
 const projects = ref([]);
 const projectToAdd = ref({});
 const projectToEdit = ref({});
+const stats = ref(null); // Добавляем статистику
 
 async function fetchProjects() {
   try {
@@ -19,13 +21,22 @@ async function fetchProjects() {
   }
 }
 
+async function fetchStats() {
+  try {
+    const r = await axios.get("/api/projects/stats/");
+    stats.value = r.data;
+  } catch (error) {
+    console.error('Ошибка загрузки статистики проектов:', error);
+  }
+}
+
 async function onProjectAdd() {
   try {
     await axios.post("/api/projects/", {
       ...projectToAdd.value,
     });
     projectToAdd.value = {};
-    await fetchProjects();
+    await Promise.all([fetchProjects(), fetchStats()]);
   } catch (error) {
     console.error('Ошибка добавления проекта:', error);
   }
@@ -40,7 +51,7 @@ async function onUpdateProject() {
     await axios.put(`/api/projects/${projectToEdit.value.id}/`, {
       ...projectToEdit.value
     });
-    await fetchProjects();
+    await Promise.all([fetchProjects(), fetchStats()]);
   } catch (error) {
     console.error('Ошибка обновления проекта:', error);
   }
@@ -50,7 +61,7 @@ async function onRemoveClick(project) {
   if (confirm('Вы уверены, что хотите удалить проект?')) {
     try {
       await axios.delete(`/api/projects/${project.id}/`);
-      await fetchProjects();
+      await Promise.all([fetchProjects(), fetchStats()]);
     } catch (error) {
       console.error('Ошибка удаления проекта:', error);
     }
@@ -58,7 +69,7 @@ async function onRemoveClick(project) {
 }
 
 onBeforeMount(async () => {
-  await fetchProjects();
+  await Promise.all([fetchProjects(), fetchStats()]);
 })
 </script>
 
@@ -87,7 +98,10 @@ onBeforeMount(async () => {
           </div>
         </div>
       </form>
-
+      <!-- Статистика -->
+      <div v-if="stats" class="mb-3 text-muted small">
+        Всего проектов: <strong>{{ stats.count }}</strong>
+      </div>
       <!-- Список проектов -->
       <div v-if="loading" class="text-center">
         <div class="spinner-border" role="status">

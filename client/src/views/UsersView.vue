@@ -1,3 +1,4 @@
+<!-- Users.vue -->
 <script setup>
 import { ref, onBeforeMount } from 'vue';
 import axios from 'axios';
@@ -8,8 +9,8 @@ const UserToAdd = ref({});
 const UserToEdit = ref({});
 const error = ref(null);
 const successMessage = ref('');
+const stats = ref(null); // Добавляем статистику
 
-// Типы пользователей
 const userTypes = [
   { value: 'admin', label: 'Администратор' },
   { value: 'manager', label: 'Менеджер проекта' },
@@ -17,7 +18,6 @@ const userTypes = [
   { value: 'viewer', label: 'Наблюдатель' }
 ];
 
-// Создаем экземпляр axios с настройками
 const api = axios.create({
   baseURL: '/api',
   headers: {
@@ -36,6 +36,15 @@ async function fetchUsers() {
     handleError(err, 'загрузки пользователей');
   } finally {
     loading.value = false;
+  }
+}
+
+async function fetchStats() {
+  try {
+    const r = await api.get("/users/stats/");
+    stats.value = r.data;
+  } catch (error) {
+    console.error('Ошибка загрузки статистики пользователей:', error);
   }
 }
 
@@ -68,7 +77,7 @@ async function onUpdateUser() {
     
     await api.put(`/users/${UserToEdit.value.id}/`, updateData);
     successMessage.value = 'Пользователь успешно обновлен';
-    await fetchUsers();
+    await Promise.all([fetchUsers(), fetchStats()]);
     
     setTimeout(() => {
       successMessage.value = '';
@@ -92,7 +101,7 @@ async function onUserAdd() {
     
     await api.post("/users/", userData);
     successMessage.value = 'Пользователь успешно создан';
-    await fetchUsers();
+    await Promise.all([fetchUsers(), fetchStats()]);
     
     UserToAdd.value = {};
     
@@ -113,7 +122,7 @@ async function onRemoveClick(user) {
   try {
     await api.delete(`/users/${user.id}/`);
     successMessage.value = 'Пользователь успешно удален';
-    await fetchUsers();
+    await Promise.all([fetchUsers(), fetchStats()]);
     
     setTimeout(() => {
       successMessage.value = '';
@@ -123,17 +132,14 @@ async function onRemoveClick(user) {
   }
 }
 
-// Функция для обработки ошибок
 function handleError(err, context) {
   console.error(`Ошибка ${context}:`, err);
   
   if (err.response) {
-    // Сервер ответил с ошибкой
     const status = err.response.status;
     const data = err.response.data;
     
     if (status === 400) {
-      // Ошибка валидации
       if (typeof data === 'object' && data !== null) {
         const errors = [];
         for (const [field, messages] of Object.entries(data)) {
@@ -145,7 +151,6 @@ function handleError(err, context) {
         }
         error.value = `Ошибка валидации: ${errors.join('; ')}`;
       } else if (typeof data === 'string') {
-        // Если это HTML, пытаемся извлечь текст
         if (data.includes('<!DOCTYPE html>')) {
           error.value = 'Сервер вернул HTML вместо JSON. Проверьте авторизацию или права доступа.';
         } else {
@@ -166,10 +171,8 @@ function handleError(err, context) {
       error.value = `Ошибка ${status}: ${JSON.stringify(data)}`;
     }
   } else if (err.request) {
-    // Запрос был сделан, но ответ не получен
     error.value = 'Нет ответа от сервера. Проверьте подключение к интернету.';
   } else {
-    // Ошибка при настройке запроса
     error.value = `Ошибка: ${err.message}`;
   }
 }
@@ -186,7 +189,7 @@ function getUserTypeLabel(type) {
 }
 
 onBeforeMount(async () => {
-  await fetchUsers();
+  await Promise.all([fetchUsers(), fetchStats()]);
 })
 </script>
 
@@ -204,7 +207,6 @@ onBeforeMount(async () => {
         <button type="button" class="btn-close" @click="successMessage = ''"></button>
       </div>
 
-      <!-- Информация для отладки -->
       <div v-if="error && error.includes('HTML')" class="alert alert-warning">
         <small>
           <strong>Отладка:</strong> Если вы видите эту ошибку, возможно:
@@ -303,6 +305,10 @@ onBeforeMount(async () => {
         </div>
       </form>
 
+            <div v-if="stats" class="mb-3 text-muted small">
+        Всего пользователей: <strong>{{ stats.count }}</strong>
+      </div>
+      
       <!-- Список пользователей -->
       <div v-if="loading" class="text-center">
         <div class="spinner-border" role="status">

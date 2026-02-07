@@ -38,6 +38,18 @@ class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
         else:
             serializer.save(user=self.request.user)
 
+    class StatsSerializer(serializers.Serializer):
+        count = serializers.IntegerField()
+    
+    @action(detail=False, methods=["GET"], url_path="stats")
+    def get_stats(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        stats = qs.aggregate(
+            count = Count("*"),
+        )
+        serializer = self.StatsSerializer(instance=stats)
+        return Response(serializer.data)
+
 
 class ColumnViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
                     mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
@@ -70,6 +82,18 @@ class ColumnViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelM
                 {"project": "Вы не можете добавлять колонки в чужие проекты"}
             )
         serializer.save()
+
+    class StatsSerializer(serializers.Serializer):
+        count = serializers.IntegerField()
+    
+    @action(detail=False, methods=["GET"], url_path="stats")
+    def get_stats(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        stats = qs.aggregate(
+            count = Count("*"),
+        )
+        serializer = self.StatsSerializer(instance=stats)
+        return Response(serializer.data)
 
 
 class TaskViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
@@ -117,12 +141,11 @@ class TaskViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
     
     @action(detail=False, methods=["GET"], url_path="stats")
     def get_stats(self, request, *args, **kwargs):
-        stats = Task.objects.aggregate(
+        qs = self.get_queryset()
+        stats = qs.aggregate(
             count = Count("*"),
         )
-
         serializer = self.StatsSerializer(instance=stats)
-        
         return Response(serializer.data)
 
 
@@ -166,6 +189,18 @@ class CommentViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
         else:
             serializer.save(user=self.request.user)
 
+    class StatsSerializer(serializers.Serializer):
+        count = serializers.IntegerField()
+    
+    @action(detail=False, methods=["GET"], url_path="stats")
+    def get_stats(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        stats = qs.aggregate(
+            count = Count("*"),
+        )
+        serializer = self.StatsSerializer(instance=stats)
+        return Response(serializer.data)
+
 
 class TimeTrackingViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
                           mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
@@ -206,6 +241,18 @@ class TimeTrackingViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.Update
             serializer.save(user=user)
         else:
             serializer.save(user=self.request.user)
+
+    class StatsSerializer(serializers.Serializer):
+        count = serializers.IntegerField()
+    
+    @action(detail=False, methods=["GET"], url_path="stats")
+    def get_stats(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        stats = qs.aggregate(
+            count = Count("*"),
+        )
+        serializer = self.StatsSerializer(instance=stats)
+        return Response(serializer.data)
 
 
 class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
@@ -251,4 +298,16 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
         """
         profile = UserProfile.objects.get_or_create(user=self.request.user)[0]
         serializer = self.get_serializer(profile)
+        return Response(serializer.data)
+
+    class StatsSerializer(serializers.Serializer):
+        count = serializers.IntegerField()
+    
+    @action(detail=False, methods=["GET"], url_path="stats")
+    def get_stats(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        stats = qs.aggregate(
+            count = Count("*"),
+        )
+        serializer = self.StatsSerializer(instance=stats)
         return Response(serializer.data)
