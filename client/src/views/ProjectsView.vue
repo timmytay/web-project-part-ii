@@ -1,4 +1,3 @@
-<!-- Projects.vue -->
 <script setup>
 import { ref, onBeforeMount } from 'vue';
 import axios from 'axios';
@@ -7,7 +6,7 @@ const loading = ref(false);
 const projects = ref([]);
 const projectToAdd = ref({});
 const projectToEdit = ref({});
-const stats = ref(null); // Добавляем статистику
+const stats = ref(null);
 
 async function fetchProjects() {
   try {
@@ -78,7 +77,6 @@ onBeforeMount(async () => {
     <div class="p-2">
       <h2>Проекты</h2>
       
-      <!-- Форма добавления -->
       <form @submit.prevent.stop="onProjectAdd" class="mb-4">
         <div class="row g-2">
           <div class="col-md-4">
@@ -98,11 +96,11 @@ onBeforeMount(async () => {
           </div>
         </div>
       </form>
-      <!-- Статистика -->
+
       <div v-if="stats" class="mb-3 text-muted small">
         Всего проектов: <strong>{{ stats.count }}</strong>
       </div>
-      <!-- Список проектов -->
+
       <div v-if="loading" class="text-center">
         <div class="spinner-border" role="status">
           <span class="visually-hidden">Загрузка...</span>
@@ -137,7 +135,6 @@ onBeforeMount(async () => {
       </div>
     </div>
 
-    <!-- Модальное окно редактирования -->
     <div class="modal fade" id="editProjectModal" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">

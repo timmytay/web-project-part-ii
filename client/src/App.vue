@@ -3,22 +3,22 @@ import { ref, onBeforeMount } from 'vue';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useRouter } from 'vue-router'
+import { useAuthStore} from './stores/auth';
+import { storeToRefs } from 'pinia';
 
 const router = useRouter()
+const userInfoStore = useAuthStore();
+const {is_authenticated} = storeToRefs(userInfoStore)
 
-const userInfo = ref({});
-
-onBeforeMount(async () => {
-  const r = await axios.get("/api/users/my/")
-  userInfo.value = r.data;
-})
-
-const goToAdmin = () => {
-  window.open('/admin', '_blank')
+async function onLogout() {
+  const r = await axios.post("/api/users/logout/")
+  userInfoStore.fetchUserInfo();
+  
+  router.go()
 }
 
-onBeforeMount(() => {
-  axios.defaults.headers.common['X-CSRFToken'] = Cookies.get("csrftoken");
+onBeforeMount(async () => {
+  await userInfoStore.fetchUserInfo();
 })
 </script>
 
@@ -51,16 +51,7 @@ onBeforeMount(() => {
             <router-link class="nav-link" to="/users">Пользователи</router-link>
           </li>
         </ul>
-        
-        <div class="d-flex">
-          <button 
-            @click="goToAdmin" 
-            class="btn btn-outline-primary"
-            title="Перейти в панель администратора"
-          >
-            <i class="bi bi-shield-lock me-1"></i> Админка
-          </button>
-        </div>
+          <button @click="onLogout" v-if="is_authenticated">Выйти</button>
       </div>
     </nav>
   </div>

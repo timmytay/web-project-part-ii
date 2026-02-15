@@ -1,4 +1,3 @@
-<!-- Comments.vue -->
 <script setup>
 import { ref, onBeforeMount } from 'vue';
 import axios from 'axios';
@@ -16,7 +15,7 @@ const commentToEditOriginal = ref(null);
 const removeImageFlag = ref(false);
 const imageViewUrl = ref('');
 const imageViewModal = ref(null);
-const stats = ref(null); // Добавляем статистику
+const stats = ref(null);
 
 async function fetchComments() {
   try {
@@ -65,7 +64,6 @@ function commentsEditPictureChange() {
   }
 }
 
-// Открытие модального окна с изображением
 function openImageViewModal(imageUrl) {
   imageViewUrl.value = imageUrl;
   
@@ -88,7 +86,6 @@ function openImageViewModal(imageUrl) {
   }
 }
 
-// Закрытие модального окна с изображением
 function closeImageViewModal() {
   const modalElement = document.getElementById('imageViewModal');
   const backdrop = document.getElementById('imageViewModalBackdrop');
@@ -221,9 +218,6 @@ onBeforeMount(async () => {
     <div class="p-2">
       <h2>Комментарии</h2>
       
-
-      
-      <!-- Форма добавления -->
       <form @submit.prevent.stop="onCommentAdd" class="mb-4">
         <div class="row g-2 align-items-end">
           <div class="col-auto">
@@ -272,11 +266,11 @@ onBeforeMount(async () => {
           </div>
         </div>
       </form>
-      <!-- Статистика -->
+
       <div v-if="stats" class="mb-3 text-muted small">
         Всего комментариев: <strong>{{ stats.count }}</strong>
       </div>
-      <!-- Список комментариев -->
+
       <div v-if="loading" class="text-center">
         <div class="spinner-border" role="status">
           <span class="visually-hidden">Загрузка...</span>
@@ -287,7 +281,7 @@ onBeforeMount(async () => {
         <div v-for="comment in comments" :key="comment.id" class="comment-item card mb-2">
           <div class="card-body">
             <div class="row align-items-center">
-              <!-- Изображение комментария -->
+
               <div class="col-auto">
                 <div v-if="comment.picture" class="position-relative">
                   <img :src="comment.picture" style="max-height: 200px; max-width: 60px;" 
@@ -306,7 +300,6 @@ onBeforeMount(async () => {
                 </small>
               </div>
               
-              <!-- Кнопки действий -->
               <div class="col-auto text-end">
                 <button type="button" class="btn btn-success btn-sm" 
                         @click="onCommentEditClick(comment)" 
@@ -324,7 +317,6 @@ onBeforeMount(async () => {
       </div>
     </div>
 
-    <!-- Модальное окно редактирования -->
     <div class="modal fade" id="editCommentModal" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -335,7 +327,7 @@ onBeforeMount(async () => {
           </div>
           <div class="modal-body">
             <div class="row g-3">
-              <!-- Текущее изображение с кнопкой удаления -->
+
               <div class="col-12" v-if="commentToEdit.picture && !removeImageFlag">
                 <div class="text-center mb-3">
                   <div class="d-flex justify-content-between align-items-center mb-2">
@@ -359,7 +351,6 @@ onBeforeMount(async () => {
                 </div>
               </div>
               
-              <!-- Загрузка нового изображения -->
               <div class="col-12">
                 <div class="mb-3">
                   <label class="form-label">Новое изображение</label>
@@ -419,7 +410,6 @@ onBeforeMount(async () => {
       </div>
     </div>
 
-    <!-- Модальное окно для просмотра изображения -->
     <div class="modal fade" id="imageViewModal" tabindex="-1" style="display: none;">
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">

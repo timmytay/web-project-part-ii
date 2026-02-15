@@ -1,9 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from tasks import views
-from django.http import HttpResponse
-from django.urls import path
-from tasks import views
 from django.conf import settings
 from django.contrib import admin
 from django.conf.urls.static import static

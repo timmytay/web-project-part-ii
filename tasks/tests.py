@@ -28,7 +28,6 @@ class APIDiscoveryTests(TestCase):
         for endpoint in endpoints:
             response = self.client.get(endpoint)
             print(f"{endpoint}: {response.status_code}")
-            # Даже если 404, это нормально - значит эндпоинт не настроен
             self.assertIn(response.status_code, [200, 404, 403])
 
 class SimpleProjectTests(TestCase):

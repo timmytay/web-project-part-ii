@@ -4,7 +4,6 @@ from .models import Project, Column, Task, Comment, TimeTracking, User, UserProf
 class UserProfileSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
     
-    # Поля из модели User
     username = serializers.CharField(source='user.username')
     email = serializers.EmailField(source='user.email', required=False)
     
@@ -18,20 +17,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['user', 'created_at', 'updated_at']
 
     def create(self, validated_data):
-        # Извлекаем данные пользователя
         user_data = validated_data.pop('user', {})
         
-        # Создаем пользователя
         user = User.objects.create_user(
             username=user_data.get('username'),
             password=validated_data.get('password', ''),
             email=user_data.get('email', '')
         )
         
-        # Создаем профиль (уже должен быть создан сигналом)
         profile = user.userprofile
         
-        # Обновляем поля профиля
         profile.name = validated_data.get('name', profile.name)
         profile.birthday = validated_data.get('birthday', profile.birthday)
         profile.type = validated_data.get('type', profile.type)
@@ -40,23 +35,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return profile
 
     def update(self, instance, validated_data):
-        # Извлекаем данные пользователя
         user_data = validated_data.pop('user', {})
         
-        # Обновляем пользователя
         if 'username' in user_data:
             instance.user.username = user_data['username']
         if 'email' in user_data:
             instance.user.email = user_data['email']
         
-        # Обновляем пароль если передан
         password = validated_data.pop('password', None)
         if password:
             instance.user.set_password(password)
         
         instance.user.save()
         
-        # Обновляем профиль
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         
@@ -65,7 +56,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
-        # Автоматически добавляем текущего пользователя при создании проекта
         if 'request' in self.context:
             validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
@@ -98,14 +88,13 @@ class TaskSerializer(serializers.ModelSerializer):
             'priority', 'status', 'due_date', 'created_at', 'updated_at', 
             'picture', 'creator', 'creator_name', 'assignee', 'assignee_name'
         ]
-        read_only_fields = ['creator']  # Поле creator нельзя менять через API
+        read_only_fields = ['creator']
 
 class CommentSerializer(serializers.ModelSerializer):
     task_title = serializers.CharField(source='task.title', read_only=True)
     user_name = serializers.CharField(source='user.username', read_only=True, allow_null=True)
     
     def create(self, validated_data):
-        # Автоматически добавляем автора комментария
         if 'request' in self.context:
             validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
@@ -120,7 +109,6 @@ class TimeTrackingSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.username', read_only=True, allow_null=True)
     
     def create(self, validated_data):
-        # Автоматически добавляем пользователя при создании учета времени
         if 'request' in self.context:
             validated_data['user'] = self.context['request'].user
         return super().create(validated_data)

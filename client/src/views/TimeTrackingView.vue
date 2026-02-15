@@ -1,4 +1,3 @@
-<!-- TimeTracking.vue -->
 <script setup>
 import { ref, onBeforeMount } from 'vue';
 import axios from 'axios';
@@ -8,7 +7,7 @@ const timeTrackings = ref([]);
 const tasks = ref([]);
 const timeToAdd = ref({});
 const timeToEdit = ref({});
-const stats = ref(null); // Добавляем статистику
+const stats = ref(null);
 
 async function fetchTimeTrackings() {
   try {
@@ -88,7 +87,6 @@ onBeforeMount(async () => {
     <div class="p-2">
       <h2>Учет времени</h2>
       
-      <!-- Форма добавления -->
       <form @submit.prevent.stop="onTimeAdd" class="mb-4">
         <div class="row g-2">
           <div class="col-md-4">
@@ -124,12 +122,10 @@ onBeforeMount(async () => {
           </div>
         </div>
       </form>
-            <!-- Статистика -->
       <div v-if="stats" class="mb-3 text-muted small">
         Всего записей учета времени: <strong>{{ stats.count }}</strong>
       </div>
 
-      <!-- Список учета времени -->
       <div v-if="loading" class="text-center">
         <div class="spinner-border" role="status">
           <span class="visually-hidden">Загрузка...</span>
@@ -175,7 +171,6 @@ onBeforeMount(async () => {
       </div>
     </div>
 
-    <!-- Модальное окно редактирования учета времени -->
     <div class="modal fade" id="editTimeModal" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">

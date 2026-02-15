@@ -1,15 +1,13 @@
-<!-- Columns.vue -->
 <script setup>
 import { computed, ref, onBeforeMount } from 'vue';
 import axios from 'axios';
 import _ from 'lodash';
-
 const loading = ref(false);
 const columns = ref([]);
 const projects = ref([]);
 const ColumnToAdd = ref({});
 const ColumnToEdit = ref({});
-const stats = ref(null); // Добавляем статистику
+const stats = ref(null);
 
 const projectsByID = computed(() => {
   return _.keyBy(projects.value, x => x.id)
@@ -65,11 +63,11 @@ onBeforeMount(async () => {
 </script>
 
 <template>
+
   <div class="container-fluid">
     <div class="p-2">
       <h2>Колонки</h2>
 
-      <!-- Форма добавления -->
       <form @submit.prevent.stop="onColumnAdd" class="mb-4">
         <div class="row">
           <div class="col">
@@ -133,7 +131,6 @@ onBeforeMount(async () => {
       </div>
     </div>
 
-    <!-- Модальное окно редактирования -->
     <div class="modal fade" id="editColumnModal" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">

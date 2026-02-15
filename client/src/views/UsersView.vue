@@ -1,4 +1,3 @@
-<!-- Users.vue -->
 <script setup>
 import { ref, onBeforeMount } from 'vue';
 import axios from 'axios';
@@ -9,7 +8,7 @@ const UserToAdd = ref({});
 const UserToEdit = ref({});
 const error = ref(null);
 const successMessage = ref('');
-const stats = ref(null); // Добавляем статистику
+const stats = ref(null);
 
 const userTypes = [
   { value: 'admin', label: 'Администратор' },
@@ -50,7 +49,7 @@ async function fetchStats() {
 
 async function onUserEditClick(user) {
   error.value = null;
-  UserToEdit.value = { 
+  UserToEdit.value = {
     ...user,
     username: user.username || '',
     email: user.email || '',
@@ -70,15 +69,15 @@ async function onUpdateUser() {
       birthday: UserToEdit.value.birthday,
       type: UserToEdit.value.type
     };
-    
+
     if (UserToEdit.value.new_password) {
       updateData.password = UserToEdit.value.new_password;
     }
-    
+
     await api.put(`/users/${UserToEdit.value.id}/`, updateData);
     successMessage.value = 'Пользователь успешно обновлен';
     await Promise.all([fetchUsers(), fetchStats()]);
-    
+
     setTimeout(() => {
       successMessage.value = '';
     }, 3000);
@@ -98,13 +97,13 @@ async function onUserAdd() {
       birthday: UserToAdd.value.birthday,
       type: UserToAdd.value.type
     };
-    
+
     await api.post("/users/", userData);
     successMessage.value = 'Пользователь успешно создан';
     await Promise.all([fetchUsers(), fetchStats()]);
-    
+
     UserToAdd.value = {};
-    
+
     setTimeout(() => {
       successMessage.value = '';
     }, 3000);
@@ -117,13 +116,13 @@ async function onRemoveClick(user) {
   if (!confirm(`Удалить пользователя ${user.username || user.id}?`)) {
     return;
   }
-  
+
   error.value = null;
   try {
     await api.delete(`/users/${user.id}/`);
     successMessage.value = 'Пользователь успешно удален';
     await Promise.all([fetchUsers(), fetchStats()]);
-    
+
     setTimeout(() => {
       successMessage.value = '';
     }, 3000);
@@ -134,11 +133,11 @@ async function onRemoveClick(user) {
 
 function handleError(err, context) {
   console.error(`Ошибка ${context}:`, err);
-  
+
   if (err.response) {
     const status = err.response.status;
     const data = err.response.data;
-    
+
     if (status === 400) {
       if (typeof data === 'object' && data !== null) {
         const errors = [];
@@ -196,12 +195,12 @@ onBeforeMount(async () => {
 <template>
   <div class="container-fluid">
     <div class="p-2">
-      <!-- Блок сообщений об ошибках и успехе -->
+      <h2>Пользователи</h2>
       <div v-if="error" class="alert alert-danger alert-dismissible fade show" role="alert">
         <strong>Ошибка!</strong> {{ error }}
         <button type="button" class="btn-close" @click="error = null"></button>
       </div>
-      
+
       <div v-if="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
         <strong>Успех!</strong> {{ successMessage }}
         <button type="button" class="btn-close" @click="successMessage = ''"></button>
@@ -218,55 +217,31 @@ onBeforeMount(async () => {
         </small>
       </div>
 
-      <!-- Форма добавления пользователя -->
       <form @submit.prevent.stop="onUserAdd">
         <div class="row g-2 mb-3">
           <div class="col-md-3">
             <div class="form-floating">
-              <input 
-                type="text" 
-                class="form-control" 
-                id="addUserName"
-                v-model="UserToAdd.username" 
-                required
-                placeholder="Имя пользователя"
-              >
+              <input type="text" class="form-control" id="addUserName" v-model="UserToAdd.username" required
+                placeholder="Имя пользователя">
               <label for="addUserName">Имя пользователя *</label>
             </div>
           </div>
           <div class="col-md-3">
             <div class="form-floating">
-              <input 
-                type="password" 
-                class="form-control" 
-                id="addUserPassword"
-                v-model="UserToAdd.password" 
-                required
-                placeholder="Пароль"
-              >
+              <input type="password" class="form-control" id="addUserPassword" v-model="UserToAdd.password" required
+                placeholder="Пароль">
               <label for="addUserPassword">Пароль *</label>
             </div>
           </div>
           <div class="col-md-3">
             <div class="form-floating">
-              <input 
-                type="email" 
-                class="form-control" 
-                id="addUserEmail"
-                v-model="UserToAdd.email" 
-                placeholder="Email"
-              >
+              <input type="email" class="form-control" id="addUserEmail" v-model="UserToAdd.email" placeholder="Email">
               <label for="addUserEmail">Email</label>
             </div>
           </div>
           <div class="col-md-3">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="addUserType"
-                v-model="UserToAdd.type" 
-                required
-              >
+              <select class="form-select" id="addUserType" v-model="UserToAdd.type" required>
                 <option value="" disabled selected>Выберите тип *</option>
                 <option v-for="type in userTypes" :value="type.value">
                   {{ type.label }}
@@ -277,25 +252,15 @@ onBeforeMount(async () => {
           </div>
           <div class="col-md-4">
             <div class="form-floating">
-              <input 
-                type="text" 
-                class="form-control" 
-                id="addProfileName"
-                v-model="UserToAdd.name" 
-                placeholder="Полное имя"
-              >
+              <input type="text" class="form-control" id="addProfileName" v-model="UserToAdd.name"
+                placeholder="Полное имя">
               <label for="addProfileName">Полное имя</label>
             </div>
           </div>
           <div class="col-md-3">
             <div class="form-floating">
-              <input 
-                type="date" 
-                class="form-control" 
-                id="addUserBirthday"
-                v-model="UserToAdd.birthday" 
-                placeholder="Дата рождения"
-              >
+              <input type="date" class="form-control" id="addUserBirthday" v-model="UserToAdd.birthday"
+                placeholder="Дата рождения">
               <label for="addUserBirthday">Дата рождения</label>
             </div>
           </div>
@@ -305,21 +270,20 @@ onBeforeMount(async () => {
         </div>
       </form>
 
-            <div v-if="stats" class="mb-3 text-muted small">
+      <div v-if="stats" class="mb-3 text-muted small">
         Всего пользователей: <strong>{{ stats.count }}</strong>
       </div>
-      
-      <!-- Список пользователей -->
+
       <div v-if="loading" class="text-center">
         <div class="spinner-border" role="status">
           <span class="visually-hidden">Загрузка...</span>
         </div>
       </div>
-      
+
       <div v-else-if="users.length === 0" class="alert alert-info">
         Пользователи не найдены
       </div>
-      
+
       <div v-else>
         <div class="table-responsive">
           <table class="table table-hover">
@@ -345,13 +309,8 @@ onBeforeMount(async () => {
                 <td>{{ getUserTypeLabel(user.type) || '—' }}</td>
                 <td>{{ formatDate(user.birthday) || '—' }}</td>
                 <td>
-                  <button 
-                    type="button" 
-                    class="btn btn-success btn-sm" 
-                    @click="onUserEditClick(user)" 
-                    data-bs-toggle="modal"
-                    data-bs-target="#editUserModal"
-                  >
+                  <button type="button" class="btn btn-success btn-sm" @click="onUserEditClick(user)"
+                    data-bs-toggle="modal" data-bs-target="#editUserModal">
                     <i class="bi bi-pencil"></i>
                   </button>
                   <button class="btn btn-danger btn-sm ms-1" @click="onRemoveClick(user)">
@@ -365,7 +324,6 @@ onBeforeMount(async () => {
       </div>
     </div>
 
-    <!-- Модальное окно редактирования пользователя -->
     <div class="modal fade" id="editUserModal" tabindex="-1">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -377,48 +335,27 @@ onBeforeMount(async () => {
             <div class="row g-3">
               <div class="col-md-6">
                 <div class="form-floating">
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    id="editUserName"
-                    v-model="UserToEdit.username"
-                    required
-                  >
+                  <input type="text" class="form-control" id="editUserName" v-model="UserToEdit.username" required>
                   <label for="editUserName">Имя пользователя *</label>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-floating">
-                  <input 
-                    type="email" 
-                    class="form-control" 
-                    id="editUserEmail"
-                    v-model="UserToEdit.email"
-                  >
+                  <input type="email" class="form-control" id="editUserEmail" v-model="UserToEdit.email">
                   <label for="editUserEmail">Email</label>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-floating">
-                  <input 
-                    type="password" 
-                    class="form-control" 
-                    id="editUserPassword"
-                    v-model="UserToEdit.new_password"
-                    placeholder="Новый пароль"
-                  >
+                  <input type="password" class="form-control" id="editUserPassword" v-model="UserToEdit.new_password"
+                    placeholder="Новый пароль">
                   <label for="editUserPassword">Новый пароль</label>
                   <div class="form-text small">Оставьте пустым, если не хотите менять пароль</div>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-floating">
-                  <select 
-                    class="form-select" 
-                    id="editUserType"
-                    v-model="UserToEdit.type"
-                    required
-                  >
+                  <select class="form-select" id="editUserType" v-model="UserToEdit.type" required>
                     <option value="" disabled>Выберите тип *</option>
                     <option v-for="type in userTypes" :value="type.value">
                       {{ type.label }}
@@ -429,23 +366,13 @@ onBeforeMount(async () => {
               </div>
               <div class="col-md-6">
                 <div class="form-floating">
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    id="editProfileName"
-                    v-model="UserToEdit.name"
-                  >
+                  <input type="text" class="form-control" id="editProfileName" v-model="UserToEdit.name">
                   <label for="editProfileName">Полное имя</label>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-floating">
-                  <input 
-                    type="date" 
-                    class="form-control" 
-                    id="editUserBirthday"
-                    v-model="UserToEdit.birthday"
-                  >
+                  <input type="date" class="form-control" id="editUserBirthday" v-model="UserToEdit.birthday">
                   <label for="editUserBirthday">Дата рождения</label>
                 </div>
               </div>
@@ -453,12 +380,7 @@ onBeforeMount(async () => {
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-            <button 
-              type="button" 
-              class="btn btn-primary" 
-              data-bs-dismiss="modal"
-              @click="onUpdateUser"
-            >
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" @click="onUpdateUser">
               Сохранить
             </button>
           </div>

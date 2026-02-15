@@ -3,6 +3,8 @@ from rest_framework import mixins, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework import serializers
+from django.contrib.auth import authenticate, login, logout
 
 from django.db.models import Avg, Count, Max, Min
 
@@ -300,6 +302,14 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
         serializer = self.get_serializer(profile)
         return Response(serializer.data)
 
+    @action(url_path="me", methods=["GET"], detail=False, permission_classes=[])
+    def get_me(self, request, *args, **kwargs):
+        return Response({
+            'username': self.request.user.username,
+            'is_authenticated': self.request.user.is_authenticated,
+            'is_staff': self.request.user.is_staff,
+        })
+
     class StatsSerializer(serializers.Serializer):
         count = serializers.IntegerField()
     
@@ -309,5 +319,39 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
         stats = qs.aggregate(
             count = Count("*"),
         )
+
         serializer = self.StatsSerializer(instance=stats)
         return Response(serializer.data)
+    
+    @action(url_path="login", methods=["POST"], detail=False, permission_classes=[])
+    def process_login(self, *args, **kwargs):
+        class LoginSerializer(serializers.Serializer):
+            username = serializers.CharField()
+            password = serializers.CharField()
+        
+        serializer = LoginSerializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+
+        username = serializer.validated_data['username']
+        password = serializer.validated_data['password']
+
+        user = authenticate(username=username, password=password)
+
+        if user:
+            login(self.request, user)
+        else:
+            return Response({
+                "status": "failed"
+            }, status=401
+            )
+        print(self.request.data)
+        return Response({
+            "status":"success"
+        })
+    @action(url_path="logout", methods=["POST"], detail=False, permission_classes=[])
+    def process_logout(self, *args, **kwargs):
+        logout(self.request)
+
+        return Response({
+            "status":"success"
+        })

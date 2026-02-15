@@ -1,4 +1,3 @@
-<!-- Tasks.vue -->
 <script setup>
 import { ref, onBeforeMount } from 'vue';
 import axios from 'axios';
@@ -13,10 +12,10 @@ const taskAddImageUrl = ref('');
 const taskEditPictureRef = ref(null);
 const taskEditImageUrl = ref('');
 const taskToEditOriginal = ref(null);
-const removeImageFlag = ref(false); // Флаг для удаления изображения
+const removeImageFlag = ref(false);
 const imageViewUrl = ref('');
 const imageViewModal = ref(null);
-const stats = ref(null); // Добавляем статистику
+const stats = ref(null);
 
 const statusOptions = [
   { value: 'todo', label: 'К выполнению' },
@@ -61,7 +60,6 @@ async function fetchStats() {
   }
 }
 
-// Обработчики для изображений
 function taskAddPictureChange() {
   if (taskAddPictureRef.value.files[0]) {
     taskAddImageUrl.value = URL.createObjectURL(taskAddPictureRef.value.files[0]);
@@ -73,13 +71,12 @@ function taskAddPictureChange() {
 function taskEditPictureChange() {
   if (taskEditPictureRef.value.files[0]) {
     taskEditImageUrl.value = URL.createObjectURL(taskEditPictureRef.value.files[0]);
-    removeImageFlag.value = false; // Сбрасываем флаг удаления если выбрано новое изображение
+    removeImageFlag.value = false;
   } else {
     taskEditImageUrl.value = '';
   }
 }
 
-// Открытие модального окна с изображением
 function openImageViewModal(imageUrl) {
   imageViewUrl.value = imageUrl;
 
@@ -88,25 +85,20 @@ function openImageViewModal(imageUrl) {
     modalElement.style.display = 'block';
     modalElement.classList.add('show');
 
-    // Добавляем backdrop
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop fade show';
     backdrop.id = 'imageViewModalBackdrop';
     document.body.appendChild(backdrop);
 
-    // Обработчик закрытия по клику на backdrop
     backdrop.onclick = closeImageViewModal;
 
-    // Обработчик клавиши ESC
     const handleEsc = (e) => e.key === 'Escape' && closeImageViewModal();
     document.addEventListener('keydown', handleEsc);
 
-    // Сохраняем обработчики для очистки
     imageViewModal.value = { handleEsc };
   }
 }
 
-// Закрытие модального окна с изображением
 function closeImageViewModal() {
   const modalElement = document.getElementById('imageViewModal');
   const backdrop = document.getElementById('imageViewModalBackdrop');
@@ -144,12 +136,11 @@ async function onTaskAdd() {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
 
-    // Очищаем форму
     taskToAdd.value = {};
     taskAddImageUrl.value = '';
     if (taskAddPictureRef.value) taskAddPictureRef.value.value = '';
 
-    await Promise.all([fetchTasks(), fetchStats()]); // Обновляем и задачи и статистику
+    await Promise.all([fetchTasks(), fetchStats()]);
   } catch (error) {
     console.error('Ошибка добавления задачи:', error);
     alert('Ошибка при добавлении задачи');
@@ -159,9 +150,9 @@ async function onTaskAdd() {
 async function onTaskEditClick(task) {
   taskToEdit.value = { ...task };
   taskToEditOriginal.value = { ...task };
-  // Устанавливаем текущее изображение в предпросмотр только если оно есть
+
   taskEditImageUrl.value = task.picture || '';
-  removeImageFlag.value = false; // Сбрасываем флаг удаления
+  removeImageFlag.value = false;
 
   if (taskEditPictureRef.value) {
     taskEditPictureRef.value.value = '';
@@ -172,17 +163,14 @@ async function onUpdateTask() {
   try {
     const formData = new FormData();
 
-    // Обработка изображения
     if (taskEditPictureRef.value.files[0]) {
-      // Загружено новое изображение
+
       formData.append('picture', taskEditPictureRef.value.files[0]);
     } else if (removeImageFlag.value && taskToEditOriginal.value?.picture) {
-      // Пользователь хочет удалить изображение
+
       formData.append('picture', '');
     }
-    // Если ничего не выбрано и флаг удаления не установлен - изображение не меняется
 
-    // Добавляем остальные поля
     formData.append('title', taskToEdit.value.title);
     formData.append('description', taskToEdit.value.description);
     formData.append('column', taskToEdit.value.column);
@@ -196,7 +184,6 @@ async function onUpdateTask() {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
 
-    // Очищаем
     taskEditImageUrl.value = '';
     taskToEdit.value = {};
     taskToEditOriginal.value = null;
@@ -215,7 +202,7 @@ async function onRemoveClick(task) {
   if (confirm('Вы уверены, что хотите удалить задачу?')) {
     try {
       await axios.delete(`/api/tasks/${task.id}/`);
-      await Promise.all([fetchTasks(), fetchStats()]); // Обновляем и задачи и статистику
+      await Promise.all([fetchTasks(), fetchStats()]);
     } catch (error) {
       console.error('Ошибка удаления задачи:', error);
       alert('Ошибка при удалении задачи');
@@ -239,19 +226,16 @@ function removeAddPicture() {
 }
 
 function removeEditPicture() {
-  // Только очищаем загруженное изображение, не устанавливаем флаг удаления
   taskEditImageUrl.value = '';
   if (taskEditPictureRef.value) taskEditPictureRef.value.value = '';
 }
 
 function removeExistingImage() {
-  // Устанавливаем флаг удаления и очищаем предпросмотр
   removeImageFlag.value = true;
   taskEditImageUrl.value = '';
   if (taskEditPictureRef.value) taskEditPictureRef.value.value = '';
 }
 
-// Функция для сброса состояния при закрытии модального окна
 function resetEditModal() {
   removeEditPicture();
   removeImageFlag.value = false;
@@ -267,10 +251,9 @@ onBeforeMount(async () => {
     <div class="p-2">
       <h2>Задачи</h2>
 
-      <!-- Форма добавления -->
       <form @submit.prevent.stop="onTaskAdd" class="mb-4">
         <div class="row g-2 align-items-end">
-          <!-- Поля задачи -->
+
           <div class="col-md-2">
             <div class="form-floating">
               <input type="text" class="form-control" v-model="taskToAdd.title" required>
@@ -317,7 +300,6 @@ onBeforeMount(async () => {
             </div>
           </div>
 
-          <!-- Загрузка изображения -->
           <div class="col-md-2">
             <div class="input-group">
               <input class="form-control" type="file" ref="taskAddPictureRef" @change="taskAddPictureChange"
@@ -329,7 +311,6 @@ onBeforeMount(async () => {
             </div>
           </div>
 
-          <!-- Предпросмотр изображения -->
           <div class="col-auto">
             <div v-if="taskAddImageUrl" class="position-relative">
               <img :src="taskAddImageUrl" style="max-height: 60px;" class="img-thumbnail clickable-image" alt=""
@@ -338,7 +319,6 @@ onBeforeMount(async () => {
             </div>
           </div>
 
-          <!-- Описание -->
           <div class="col-md-12 mt-2">
             <div class="form-floating">
               <textarea class="form-control" v-model="taskToAdd.description" placeholder="Описание задачи"
@@ -347,20 +327,17 @@ onBeforeMount(async () => {
             </div>
           </div>
 
-          <!-- Кнопка добавления -->
           <div class="col-md-12 mt-2">
             <button class="btn btn-primary">Добавить задачу</button>
           </div>
         </div>
       </form>
 
-      <!-- Статистика -->
       <div v-if="stats" class="mb-3 text-muted small">
         Всего задач: <strong>{{ stats.count }}</strong>
       </div>
 
 
-      <!-- Список задач -->
       <div v-if="loading" class="text-center">
         <div class="spinner-border" role="status">
           <span class="visually-hidden">Загрузка...</span>
@@ -371,7 +348,7 @@ onBeforeMount(async () => {
         <div v-for="task in tasks" :key="task.id" class="task-item card mb-2">
           <div class="card-body">
             <div class="row align-items-center">
-              <!-- Изображение задачи -->
+
               <div class="col-auto">
                 <div v-if="task.picture" class="position-relative">
                   <img :src="task.picture" style="max-height: 60px; max-width: 60px;"
@@ -384,14 +361,12 @@ onBeforeMount(async () => {
                 </div>
               </div>
 
-              <!-- Информация о задаче -->
               <div class="col-md-3">
                 <h6 class="card-title">{{ task.title }}</h6>
                 <p class="card-text mb-1">{{ task.description }}</p>
                 <small class="text-muted">{{ task.column_name }}</small>
               </div>
 
-              <!-- Статус и приоритет -->
               <div class="col-md-2">
                 <span class="badge" :class="{
                   'bg-secondary': task.status === 'todo',
@@ -412,7 +387,6 @@ onBeforeMount(async () => {
                 </span>
               </div>
 
-              <!-- Даты -->
               <div class="col-md-2">
                 <small class="text-muted">
                   Срок: {{ task.due_date ? new Date(task.due_date).toLocaleDateString() : 'Не указан' }}
@@ -423,7 +397,6 @@ onBeforeMount(async () => {
                 </small>
               </div>
 
-              <!-- Кнопки действий -->
               <div class="col-md-2 text-end">
                 <button type="button" class="btn btn-success btn-sm" @click="onTaskEditClick(task)"
                   data-bs-toggle="modal" data-bs-target="#editTaskModal">
@@ -439,7 +412,6 @@ onBeforeMount(async () => {
       </div>
     </div>
 
-    <!-- Модальное окно редактирования задачи -->
     <div class="modal fade" id="editTaskModal" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -449,7 +421,6 @@ onBeforeMount(async () => {
           </div>
           <div class="modal-body">
             <div class="row g-3">
-              <!-- Текущее изображение с кнопкой удаления -->
               <div class="col-12" v-if="taskToEdit.picture && !removeImageFlag">
                 <div class="text-center mb-3">
                   <div class="d-flex justify-content-between align-items-center mb-2">
@@ -471,7 +442,6 @@ onBeforeMount(async () => {
                 </div>
               </div>
 
-              <!-- Загрузка нового изображения -->
               <div class="col-12">
                 <div class="mb-3">
                   <label class="form-label">Новое изображение</label>
@@ -485,7 +455,6 @@ onBeforeMount(async () => {
                   </div>
                 </div>
 
-                <!-- Показываем только если выбрано новое изображение -->
                 <div class="text-center mb-3" v-if="taskEditImageUrl && taskEditPictureRef?.files?.length">
                   <p class="text-muted mb-1">Предпросмотр нового изображения:</p>
                   <div class="position-relative d-inline-block">
@@ -497,7 +466,6 @@ onBeforeMount(async () => {
                 </div>
               </div>
 
-              <!-- Поля задачи -->
               <div class="col-12">
                 <div class="form-floating">
                   <input type="text" class="form-control" v-model="taskToEdit.title" required>
@@ -562,7 +530,6 @@ onBeforeMount(async () => {
       </div>
     </div>
 
-    <!-- Модальное окно для просмотра изображения -->
     <div class="modal fade" id="imageViewModal" tabindex="-1" style="display: none;">
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -636,7 +603,6 @@ onBeforeMount(async () => {
   z-index: 1060;
 }
 
-/* Стили для блока статистики */
 .vr {
   width: 1px;
   height: 2.5rem;
