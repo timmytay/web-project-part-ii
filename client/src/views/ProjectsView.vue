@@ -8,22 +8,18 @@ const projectToAdd = ref({});
 const projectToEdit = ref({});
 const stats = ref(null);
 
-// Фильтры
 const filters = ref({
   name: ''
 });
 
-// Отфильтрованные проекты
 const filteredProjects = computed(() => {
   return projects.value.filter(project => {
-    // Фильтр по названию
     const matchesName = project.name.toLowerCase().includes(filters.value.name.toLowerCase());
     
     return matchesName;
   });
 });
 
-// Сброс фильтров
 function resetFilters() {
   filters.value = {
     name: ''

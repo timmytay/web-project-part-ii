@@ -10,7 +10,6 @@ const error = ref(null);
 const successMessage = ref('');
 const stats = ref(null);
 
-// Фильтры
 const filters = ref({
   username: '',
   name: '',
@@ -25,26 +24,20 @@ const userTypes = [
   { value: 'viewer', label: 'Наблюдатель' }
 ];
 
-// Отфильтрованные пользователи
 const filteredUsers = computed(() => {
   return users.value.filter(user => {
-    // Фильтр по имени пользователя
     const matchesUsername = user.username?.toLowerCase().includes(filters.value.username.toLowerCase()) ?? true;
     
-    // Фильтр по полному имени
     const matchesName = user.name?.toLowerCase().includes(filters.value.name.toLowerCase()) ?? true;
     
-    // Фильтр по email
     const matchesEmail = user.email?.toLowerCase().includes(filters.value.email.toLowerCase()) ?? true;
     
-    // Фильтр по типу пользователя
     const matchesType = !filters.value.type || user.type === filters.value.type;
     
     return matchesUsername && matchesName && matchesEmail && matchesType;
   });
 });
 
-// Сброс фильтров
 function resetFilters() {
   filters.value = {
     username: '',

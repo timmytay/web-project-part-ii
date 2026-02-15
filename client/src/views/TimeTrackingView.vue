@@ -9,7 +9,6 @@ const timeToAdd = ref({});
 const timeToEdit = ref({});
 const stats = ref(null);
 
-// Фильтры
 const filters = ref({
   task: '',
   description: '',
@@ -17,16 +16,12 @@ const filters = ref({
   dateTo: ''
 });
 
-// Отфильтрованные записи учета времени
 const filteredTimeTrackings = computed(() => {
   return timeTrackings.value.filter(time => {
-    // Фильтр по задаче
     const matchesTask = !filters.value.task || time.task === parseInt(filters.value.task);
     
-    // Фильтр по описанию
     const matchesDescription = time.description?.toLowerCase().includes(filters.value.description.toLowerCase()) ?? true;
     
-    // Фильтр по дате начала
     let matchesDateFrom = true;
     if (filters.value.dateFrom) {
       const startDate = new Date(time.start_time);
@@ -34,7 +29,6 @@ const filteredTimeTrackings = computed(() => {
       matchesDateFrom = startDate >= filterDate;
     }
     
-    // Фильтр по дате окончания
     let matchesDateTo = true;
     if (filters.value.dateTo) {
       const endDate = time.end_time ? new Date(time.end_time) : new Date();
@@ -47,7 +41,6 @@ const filteredTimeTrackings = computed(() => {
   });
 });
 
-// Сброс фильтров
 function resetFilters() {
   filters.value = {
     task: '',

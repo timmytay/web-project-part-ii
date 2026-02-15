@@ -10,7 +10,6 @@ const ColumnToAdd = ref({});
 const ColumnToEdit = ref({});
 const stats = ref(null);
 
-// Фильтры
 const filters = ref({
   name: '',
   project: ''
@@ -20,20 +19,16 @@ const projectsByID = computed(() => {
   return _.keyBy(projects.value, x => x.id)
 })
 
-// Отфильтрованные колонки
 const filteredColumns = computed(() => {
   return columns.value.filter(column => {
-    // Фильтр по названию
     const matchesName = column.name.toLowerCase().includes(filters.value.name.toLowerCase());
     
-    // Фильтр по проекту
     const matchesProject = !filters.value.project || column.project === parseInt(filters.value.project);
     
     return matchesName && matchesProject;
   });
 });
 
-// Сброс фильтров
 function resetFilters() {
   filters.value = {
     name: '',

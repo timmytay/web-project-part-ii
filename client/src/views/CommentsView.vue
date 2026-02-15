@@ -17,26 +17,21 @@ const imageViewUrl = ref('');
 const imageViewModal = ref(null);
 const stats = ref(null);
 
-// Фильтры
 const filters = ref({
   text: '',
   task: ''
 });
 
-// Отфильтрованные комментарии
 const filteredComments = computed(() => {
   return comments.value.filter(comment => {
-    // Фильтр по тексту комментария
     const matchesText = comment.text.toLowerCase().includes(filters.value.text.toLowerCase());
     
-    // Фильтр по задаче
     const matchesTask = !filters.value.task || comment.task === parseInt(filters.value.task);
     
     return matchesText && matchesTask;
   });
 });
 
-// Сброс фильтров
 function resetFilters() {
   filters.value = {
     text: '',
@@ -294,7 +289,6 @@ onBeforeMount(async () => {
         </div>
       </form>
 
-      <!-- Панель фильтров -->
       <div class="filters-panel mb-4">
         <h5>Фильтры</h5>
         <div class="row g-3">
@@ -330,7 +324,6 @@ onBeforeMount(async () => {
           </div>
         </div>
         
-        <!-- Информация о количестве отфильтрованных записей -->
         <div class="filter-info mt-2 text-muted small">
           Показано: <b>{{ filteredComments.length }}</b> из <b>{{ comments.length }}</b>
         </div>

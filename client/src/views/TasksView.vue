@@ -17,7 +17,6 @@ const imageViewUrl = ref('');
 const imageViewModal = ref(null);
 const stats = ref(null);
 
-// Фильтры
 const filters = ref({
   title: '',
   column: '',
@@ -38,26 +37,20 @@ const priorityOptions = [
   { value: 'high', label: 'Высокий' }
 ];
 
-// Отфильтрованные задачи
 const filteredTasks = computed(() => {
   return tasks.value.filter(task => {
-    // Фильтр по названию
     const matchesTitle = task.title.toLowerCase().includes(filters.value.title.toLowerCase());
     
-    // Фильтр по колонке
     const matchesColumn = !filters.value.column || task.column === parseInt(filters.value.column);
     
-    // Фильтр по статусу
     const matchesStatus = !filters.value.status || task.status === filters.value.status;
     
-    // Фильтр по приоритету
     const matchesPriority = !filters.value.priority || task.priority === filters.value.priority;
     
     return matchesTitle && matchesColumn && matchesStatus && matchesPriority;
   });
 });
 
-// Сброс фильтров
 function resetFilters() {
   filters.value = {
     title: '',
@@ -162,7 +155,6 @@ async function onTaskAdd() {
       formData.append('picture', taskAddPictureRef.value.files[0]);
     }
 
-    // Добавляем все поля задачи
     for (const key in taskToAdd.value) {
       if (taskToAdd.value[key] !== undefined && taskToAdd.value[key] !== null) {
         formData.append(key, taskToAdd.value[key]);
@@ -228,7 +220,7 @@ async function onUpdateTask() {
 
     if (taskEditPictureRef.value) taskEditPictureRef.value.value = '';
 
-    await Promise.all([fetchTasks(), fetchStats()]); // Обновляем и задачи и статистику
+    await Promise.all([fetchTasks(), fetchStats()]);
   } catch (error) {
     console.error('Ошибка обновления задачи:', error);
     alert('Ошибка при обновлении задачи');
