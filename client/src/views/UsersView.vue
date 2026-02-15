@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount } from 'vue';
+import { ref, computed, onBeforeMount } from 'vue';
 import axios from 'axios';
 
 const loading = ref(false);
@@ -10,12 +10,49 @@ const error = ref(null);
 const successMessage = ref('');
 const stats = ref(null);
 
+// Фильтры
+const filters = ref({
+  username: '',
+  name: '',
+  email: '',
+  type: ''
+});
+
 const userTypes = [
   { value: 'admin', label: 'Администратор' },
   { value: 'manager', label: 'Менеджер проекта' },
   { value: 'developer', label: 'Разработчик' },
   { value: 'viewer', label: 'Наблюдатель' }
 ];
+
+// Отфильтрованные пользователи
+const filteredUsers = computed(() => {
+  return users.value.filter(user => {
+    // Фильтр по имени пользователя
+    const matchesUsername = user.username?.toLowerCase().includes(filters.value.username.toLowerCase()) ?? true;
+    
+    // Фильтр по полному имени
+    const matchesName = user.name?.toLowerCase().includes(filters.value.name.toLowerCase()) ?? true;
+    
+    // Фильтр по email
+    const matchesEmail = user.email?.toLowerCase().includes(filters.value.email.toLowerCase()) ?? true;
+    
+    // Фильтр по типу пользователя
+    const matchesType = !filters.value.type || user.type === filters.value.type;
+    
+    return matchesUsername && matchesName && matchesEmail && matchesType;
+  });
+});
+
+// Сброс фильтров
+function resetFilters() {
+  filters.value = {
+    username: '',
+    name: '',
+    email: '',
+    type: ''
+  };
+}
 
 const api = axios.create({
   baseURL: '/api',
@@ -270,6 +307,74 @@ onBeforeMount(async () => {
         </div>
       </form>
 
+      <!-- Панель фильтров -->
+      <div class="filters-panel mb-4">
+        <h5>Фильтры</h5>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <div class="form-floating">
+              <input 
+                type="text" 
+                class="form-control" 
+                id="filterUsername"
+                v-model="filters.username"
+                placeholder="Введите имя пользователя"
+              >
+              <label for="filterUsername">По имени пользователя</label>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-floating">
+              <input 
+                type="text" 
+                class="form-control" 
+                id="filterName"
+                v-model="filters.name"
+                placeholder="Введите полное имя"
+              >
+              <label for="filterName">По полному имени</label>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-floating">
+              <input 
+                type="text" 
+                class="form-control" 
+                id="filterEmail"
+                v-model="filters.email"
+                placeholder="Введите email"
+              >
+              <label for="filterEmail">По email</label>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-floating">
+              <select 
+                class="form-select" 
+                id="filterType"
+                v-model="filters.type"
+              >
+                <option value="">Все типы</option>
+                <option v-for="type in userTypes" :value="type.value">
+                  {{ type.label }}
+                </option>
+              </select>
+              <label for="filterType">По типу</label>
+            </div>
+          </div>
+          <div class="col-md-1 d-flex align-items-center">
+            <button class="btn btn-outline-secondary w-100" @click="resetFilters">
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Информация о количестве отфильтрованных записей -->
+        <div class="filter-info mt-2 text-muted small">
+          Показано: <b>{{ filteredUsers.length }}</b> из <b>{{ users.length }}</b>
+        </div>
+      </div>
+
       <div v-if="stats" class="mb-3 text-muted small">
         Всего пользователей: <strong>{{ stats.count }}</strong>
       </div>
@@ -280,7 +385,7 @@ onBeforeMount(async () => {
         </div>
       </div>
 
-      <div v-else-if="users.length === 0" class="alert alert-info">
+      <div v-else-if="filteredUsers.length === 0" class="alert alert-info">
         Пользователи не найдены
       </div>
 
@@ -299,7 +404,7 @@ onBeforeMount(async () => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in users" :key="user.id">
+              <tr v-for="user in filteredUsers" :key="user.id">
                 <td>{{ user.id }}</td>
                 <td>
                   <strong>{{ user.username || 'N/A' }}</strong>
@@ -391,6 +496,23 @@ onBeforeMount(async () => {
 </template>
 
 <style lang="scss" scoped>
+.filters-panel {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  
+  h5 {
+    margin-bottom: 1rem;
+    color: #495057;
+    font-size: 1rem;
+  }
+}
+
+.filter-info {
+  font-size: 0.875rem;
+}
+
 .alert {
   margin-bottom: 1rem;
 }

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount } from 'vue';
+import { ref, computed, onBeforeMount } from 'vue';
 import axios from 'axios';
 
 const loading = ref(false);
@@ -16,6 +16,33 @@ const removeImageFlag = ref(false);
 const imageViewUrl = ref('');
 const imageViewModal = ref(null);
 const stats = ref(null);
+
+// Фильтры
+const filters = ref({
+  text: '',
+  task: ''
+});
+
+// Отфильтрованные комментарии
+const filteredComments = computed(() => {
+  return comments.value.filter(comment => {
+    // Фильтр по тексту комментария
+    const matchesText = comment.text.toLowerCase().includes(filters.value.text.toLowerCase());
+    
+    // Фильтр по задаче
+    const matchesTask = !filters.value.task || comment.task === parseInt(filters.value.task);
+    
+    return matchesText && matchesTask;
+  });
+});
+
+// Сброс фильтров
+function resetFilters() {
+  filters.value = {
+    text: '',
+    task: ''
+  };
+}
 
 async function fetchComments() {
   try {
@@ -267,6 +294,48 @@ onBeforeMount(async () => {
         </div>
       </form>
 
+      <!-- Панель фильтров -->
+      <div class="filters-panel mb-4">
+        <h5>Фильтры</h5>
+        <div class="row g-3">
+          <div class="col-md-5">
+            <div class="form-floating">
+              <input 
+                type="text" 
+                class="form-control" 
+                id="filterText"
+                v-model="filters.text"
+                placeholder="Введите текст"
+              >
+              <label for="filterText">По тексту комментария</label>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="form-floating">
+              <select 
+                class="form-select" 
+                id="filterTask"
+                v-model="filters.task"
+              >
+                <option value="">Все задачи</option>
+                <option :value="task.id" v-for="task in tasks">{{ task.title }}</option>
+              </select>
+              <label for="filterTask">По задаче</label>
+            </div>
+          </div>
+          <div class="col-md-2 d-flex align-items-center">
+            <button class="btn btn-outline-secondary w-100" @click="resetFilters">
+              <i class="bi bi-x-circle"></i> Сбросить
+            </button>
+          </div>
+        </div>
+        
+        <!-- Информация о количестве отфильтрованных записей -->
+        <div class="filter-info mt-2 text-muted small">
+          Показано: <b>{{ filteredComments.length }}</b> из <b>{{ comments.length }}</b>
+        </div>
+      </div>
+
       <div v-if="stats" class="mb-3 text-muted small">
         Всего комментариев: <strong>{{ stats.count }}</strong>
       </div>
@@ -278,7 +347,12 @@ onBeforeMount(async () => {
       </div>
       
       <div v-else>
-        <div v-for="comment in comments" :key="comment.id" class="comment-item card mb-2">
+        <!-- Сообщение если ничего не найдено -->
+        <div v-if="filteredComments.length === 0" class="alert alert-info">
+          Комментарии не найдены
+        </div>
+        
+        <div v-for="comment in filteredComments" :key="comment.id" class="comment-item card mb-2">
           <div class="card-body">
             <div class="row align-items-center">
 
@@ -433,7 +507,24 @@ onBeforeMount(async () => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+.filters-panel {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  
+  h5 {
+    margin-bottom: 1rem;
+    color: #495057;
+    font-size: 1rem;
+  }
+}
+
+.filter-info {
+  font-size: 0.875rem;
+}
+
 .comment-item {
   transition: box-shadow 0.2s;
 }

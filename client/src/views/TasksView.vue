@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount } from 'vue';
+import { ref, computed, onBeforeMount } from 'vue';
 import axios from 'axios';
 
 const loading = ref(false);
@@ -17,6 +17,14 @@ const imageViewUrl = ref('');
 const imageViewModal = ref(null);
 const stats = ref(null);
 
+// Фильтры
+const filters = ref({
+  title: '',
+  column: '',
+  status: '',
+  priority: ''
+});
+
 const statusOptions = [
   { value: 'todo', label: 'К выполнению' },
   { value: 'in_progress', label: 'В работе' },
@@ -29,6 +37,35 @@ const priorityOptions = [
   { value: 'medium', label: 'Средний' },
   { value: 'high', label: 'Высокий' }
 ];
+
+// Отфильтрованные задачи
+const filteredTasks = computed(() => {
+  return tasks.value.filter(task => {
+    // Фильтр по названию
+    const matchesTitle = task.title.toLowerCase().includes(filters.value.title.toLowerCase());
+    
+    // Фильтр по колонке
+    const matchesColumn = !filters.value.column || task.column === parseInt(filters.value.column);
+    
+    // Фильтр по статусу
+    const matchesStatus = !filters.value.status || task.status === filters.value.status;
+    
+    // Фильтр по приоритету
+    const matchesPriority = !filters.value.priority || task.priority === filters.value.priority;
+    
+    return matchesTitle && matchesColumn && matchesStatus && matchesPriority;
+  });
+});
+
+// Сброс фильтров
+function resetFilters() {
+  filters.value = {
+    title: '',
+    column: '',
+    status: '',
+    priority: ''
+  };
+}
 
 async function fetchTasks() {
   try {
@@ -333,6 +370,78 @@ onBeforeMount(async () => {
         </div>
       </form>
 
+      <!-- Панель фильтров -->
+      <div class="filters-panel mb-4">
+        <h5>Фильтры</h5>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <div class="form-floating">
+              <input 
+                type="text" 
+                class="form-control" 
+                id="filterTitle"
+                v-model="filters.title"
+                placeholder="Введите название"
+              >
+              <label for="filterTitle">По названию</label>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-floating">
+              <select 
+                class="form-select" 
+                id="filterColumn"
+                v-model="filters.column"
+              >
+                <option value="">Все колонки</option>
+                <option :value="col.id" v-for="col in columns">{{ col.name }}</option>
+              </select>
+              <label for="filterColumn">По колонке</label>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-floating">
+              <select 
+                class="form-select" 
+                id="filterStatus"
+                v-model="filters.status"
+              >
+                <option value="">Все статусы</option>
+                <option v-for="status in statusOptions" :value="status.value">
+                  {{ status.label }}
+                </option>
+              </select>
+              <label for="filterStatus">По статусу</label>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-floating">
+              <select 
+                class="form-select" 
+                id="filterPriority"
+                v-model="filters.priority"
+              >
+                <option value="">Все приоритеты</option>
+                <option v-for="priority in priorityOptions" :value="priority.value">
+                  {{ priority.label }}
+                </option>
+              </select>
+              <label for="filterPriority">По приоритету</label>
+            </div>
+          </div>
+          <div class="col-md-2 d-flex align-items-center">
+            <button class="btn btn-outline-secondary w-100" @click="resetFilters">
+              <i class="bi bi-x-circle"></i> Сбросить
+            </button>
+          </div>
+        </div>
+        
+        <!-- Информация о количестве отфильтрованных записей -->
+        <div class="filter-info mt-2 text-muted small">
+          Показано: <b>{{ filteredTasks.length }}</b> из <b>{{ tasks.length }}</b>
+        </div>
+      </div>
+
       <div v-if="stats" class="mb-3 text-muted small">
         Всего задач: <strong>{{ stats.count }}</strong>
       </div>
@@ -345,7 +454,12 @@ onBeforeMount(async () => {
       </div>
 
       <div v-else>
-        <div v-for="task in tasks" :key="task.id" class="task-item card mb-2">
+        <!-- Сообщение если ничего не найдено -->
+        <div v-if="filteredTasks.length === 0" class="alert alert-info">
+          Задачи не найдены
+        </div>
+        
+        <div v-for="task in filteredTasks" :key="task.id" class="task-item card mb-2">
           <div class="card-body">
             <div class="row align-items-center">
 
@@ -552,7 +666,24 @@ onBeforeMount(async () => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+.filters-panel {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  
+  h5 {
+    margin-bottom: 1rem;
+    color: #495057;
+    font-size: 1rem;
+  }
+}
+
+.filter-info {
+  font-size: 0.875rem;
+}
+
 .task-item {
   transition: box-shadow 0.2s;
 }

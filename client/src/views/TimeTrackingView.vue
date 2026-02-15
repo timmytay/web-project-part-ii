@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeMount } from 'vue';
+import { ref, computed, onBeforeMount } from 'vue';
 import axios from 'axios';
 
 const loading = ref(false);
@@ -8,6 +8,54 @@ const tasks = ref([]);
 const timeToAdd = ref({});
 const timeToEdit = ref({});
 const stats = ref(null);
+
+// Фильтры
+const filters = ref({
+  task: '',
+  description: '',
+  dateFrom: '',
+  dateTo: ''
+});
+
+// Отфильтрованные записи учета времени
+const filteredTimeTrackings = computed(() => {
+  return timeTrackings.value.filter(time => {
+    // Фильтр по задаче
+    const matchesTask = !filters.value.task || time.task === parseInt(filters.value.task);
+    
+    // Фильтр по описанию
+    const matchesDescription = time.description?.toLowerCase().includes(filters.value.description.toLowerCase()) ?? true;
+    
+    // Фильтр по дате начала
+    let matchesDateFrom = true;
+    if (filters.value.dateFrom) {
+      const startDate = new Date(time.start_time);
+      const filterDate = new Date(filters.value.dateFrom);
+      matchesDateFrom = startDate >= filterDate;
+    }
+    
+    // Фильтр по дате окончания
+    let matchesDateTo = true;
+    if (filters.value.dateTo) {
+      const endDate = time.end_time ? new Date(time.end_time) : new Date();
+      const filterDate = new Date(filters.value.dateTo);
+      filterDate.setHours(23, 59, 59);
+      matchesDateTo = endDate <= filterDate;
+    }
+    
+    return matchesTask && matchesDescription && matchesDateFrom && matchesDateTo;
+  });
+});
+
+// Сброс фильтров
+function resetFilters() {
+  filters.value = {
+    task: '',
+    description: '',
+    dateFrom: '',
+    dateTo: ''
+  };
+}
 
 async function fetchTimeTrackings() {
   try {
@@ -122,6 +170,71 @@ onBeforeMount(async () => {
           </div>
         </div>
       </form>
+
+      <!-- Панель фильтров -->
+      <div class="filters-panel mb-4">
+        <h5>Фильтры</h5>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <div class="form-floating">
+              <select 
+                class="form-select" 
+                id="filterTask"
+                v-model="filters.task"
+              >
+                <option value="">Все задачи</option>
+                <option :value="task.id" v-for="task in tasks">{{ task.title }}</option>
+              </select>
+              <label for="filterTask">По задаче</label>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-floating">
+              <input 
+                type="text" 
+                class="form-control" 
+                id="filterDescription"
+                v-model="filters.description"
+                placeholder="Введите описание"
+              >
+              <label for="filterDescription">По описанию</label>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-floating">
+              <input 
+                type="date" 
+                class="form-control" 
+                id="filterDateFrom"
+                v-model="filters.dateFrom"
+              >
+              <label for="filterDateFrom">Дата с</label>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="form-floating">
+              <input 
+                type="date" 
+                class="form-control" 
+                id="filterDateTo"
+                v-model="filters.dateTo"
+              >
+              <label for="filterDateTo">Дата по</label>
+            </div>
+          </div>
+          <div class="col-md-2 d-flex align-items-center">
+            <button class="btn btn-outline-secondary w-100" @click="resetFilters">
+              <i class="bi bi-x-circle"></i> Сбросить
+            </button>
+          </div>
+        </div>
+        
+        <!-- Информация о количестве отфильтрованных записей -->
+        <div class="filter-info mt-2 text-muted small">
+          Показано: <b>{{ filteredTimeTrackings.length }}</b> из <b>{{ timeTrackings.length }}</b>
+        </div>
+      </div>
+
       <div v-if="stats" class="mb-3 text-muted small">
         Всего записей учета времени: <strong>{{ stats.count }}</strong>
       </div>
@@ -133,7 +246,12 @@ onBeforeMount(async () => {
       </div>
       
       <div v-else>
-        <div v-for="time in timeTrackings" :key="time.id" class="time-item card mb-2">
+        <!-- Сообщение если ничего не найдено -->
+        <div v-if="filteredTimeTrackings.length === 0" class="alert alert-info">
+          Записи учета времени не найдены
+        </div>
+        
+        <div v-for="time in filteredTimeTrackings" :key="time.id" class="time-item card mb-2">
           <div class="card-body">
             <div class="row align-items-center">
               <div class="col-md-4">
@@ -211,7 +329,24 @@ onBeforeMount(async () => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+.filters-panel {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  
+  h5 {
+    margin-bottom: 1rem;
+    color: #495057;
+    font-size: 1rem;
+  }
+}
+
+.filter-info {
+  font-size: 0.875rem;
+}
+
 .time-item {
   transition: box-shadow 0.2s;
 }
