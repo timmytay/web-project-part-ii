@@ -117,7 +117,7 @@ async function onRemoveClick(timeTracking) {
     }
   }
 }
-
+// временной трекинг
 onBeforeMount(async () => {
   await Promise.all([fetchTimeTrackings(), fetchTasks(), fetchStats()]);
 })

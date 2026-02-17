@@ -76,7 +76,7 @@ async function fetchStats() {
     console.error('Ошибка загрузки статистики пользователей:', error);
   }
 }
-
+// страница с пользователями
 async function onUserEditClick(user) {
   error.value = null;
   UserToEdit.value = {

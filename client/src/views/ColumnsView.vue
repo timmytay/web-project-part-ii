@@ -14,7 +14,7 @@ const filters = ref({
   name: '',
   project: ''
 });
-
+// страница колонок
 const projectsByID = computed(() => {
   return _.keyBy(projects.value, x => x.id)
 })

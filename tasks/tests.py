@@ -8,7 +8,7 @@ from django.utils import timezone
 import json
 
 class APIDiscoveryTests(TestCase):
-    """Тесты для обнаружения структуры API"""
+    """тесты для обнаружения структуры API"""
     
     def setUp(self):
         self.client = APIClient()
@@ -16,7 +16,7 @@ class APIDiscoveryTests(TestCase):
         self.client.force_authenticate(user=self.user)
 
     def test_api_endpoints_exist(self):
-        """Проверка на наличие эндпоинтов"""
+        """проверка на наличие эндпоинтов"""
         endpoints = [
             '/api/projects/',
             '/api/columns/', 
@@ -30,8 +30,8 @@ class APIDiscoveryTests(TestCase):
             print(f"{endpoint}: {response.status_code}")
             self.assertIn(response.status_code, [200, 404, 403])
 
-class SimpleProjectTests(TestCase):
-    """Тесты для Project"""
+class ProjectTests(TestCase):
+    """тесты для проекта"""
     
     def setUp(self):
         self.client = APIClient()
@@ -41,8 +41,8 @@ class SimpleProjectTests(TestCase):
         )
         self.client.force_authenticate(user=self.user)
 
-    def test_create_project_simple(self):
-        """Тест создания проекта"""
+    def test_create_project(self):
+        """создание проекта"""
         test_data = {'name': 'Simple Project'}
         
         if hasattr(Project, 'description'):
@@ -59,8 +59,8 @@ class SimpleProjectTests(TestCase):
         if response.status_code == 400:
             print(f"Errors: {response.data}")
 
-class SimpleCommentTests(TestCase):
-    """Тесты для Comment"""
+class CommentTests(TestCase):
+    """тесты для коммента"""
     
     def setUp(self):
         self.client = APIClient()
@@ -88,8 +88,8 @@ class SimpleCommentTests(TestCase):
         )
         self.client.force_authenticate(user=self.user)
 
-    def test_create_comment_simple(self):
-        """Тест создания комментария"""
+    def test_create_comment(self):
+        """тест создания комментария"""
         response = self.client.post('/api/comments/', {
             'task': self.task.id,
             'text': 'Simple comment'
@@ -101,8 +101,8 @@ class SimpleCommentTests(TestCase):
         if response.status_code == 400:
             print(f"Errors: {response.data}")
 
-class RealDataTests(TestCase):
-    """Тесты с реальными данными"""
+class DataTests(TestCase):
+    """тесты с реальными данными"""
     
     def setUp(self):
         self.client = APIClient()
@@ -114,29 +114,29 @@ class RealDataTests(TestCase):
         
         try:
             self.project = Project.objects.create(
-                name="Real Project", 
+                name="Project", 
                 owner=self.user,
-                description="Real project description"
+                description="Project description"
             )
         except TypeError:
             self.project = Project.objects.create(
-                name="Real Project",
-                description="Real project description"
+                name="Project",
+                description="Project description"
             )
             
         self.column = Column.objects.create(
-            name="Real Column",
+            name="Column",
             project=self.project, 
             order=1
         )
         self.task = Task.objects.create(
-            title="Real Task",
+            title="Task",
             column=self.column,
-            description="Real task description"
+            description="Task description"
         )
 
     def test_get_existing_projects(self):
-        """Тест получения существующих проектов"""
+        """тест получения существующих проектов"""
         response = self.client.get('/api/projects/')
         print(f"GET Projects: {response.status_code}")
         
@@ -150,7 +150,7 @@ class RealDataTests(TestCase):
                     print(f"Projects count: {len(response.data['results'])}")
 
     def test_get_existing_tasks(self):
-        """Тест получения существующих задач"""
+        """тест получения существующих задач"""
         response = self.client.get('/api/tasks/')
         print(f"GET Tasks: {response.status_code}")
         
@@ -160,7 +160,7 @@ class RealDataTests(TestCase):
                 print(f"Tasks count: {len(response.data)}")
 
     def test_try_create_comment(self):
-        """Создание комментария к существующей задаче"""
+        """создание комментария к существующей задаче"""
         response = self.client.post('/api/comments/', {
             'task': self.task.id,
             'text': 'Real comment text'
@@ -173,7 +173,7 @@ class RealDataTests(TestCase):
             print(f"Comment created: {response.data}")
 
     def test_try_create_timetracking(self):
-        """Создание учета времени"""
+        """создание учета времени"""
         response = self.client.post('/api/timetracking/', {
             'task': self.task.id,
             'start_time': timezone.now().isoformat(),

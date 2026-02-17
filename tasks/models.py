@@ -4,6 +4,8 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 from django.contrib.auth.models import User
 
+"""модели для базы данных"""
+
 class Project(models.Model):
     name = models.CharField("Название", max_length=255)
     description = models.TextField("Описание", blank=True)

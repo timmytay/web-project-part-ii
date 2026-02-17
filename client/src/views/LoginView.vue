@@ -10,7 +10,7 @@ const isLoading = ref(false);
 
 const authStore = useAuthStore();
 const router = useRouter();
-
+// страничка входа в систему
 async function onLoginFormSubmit() {
   errorMessage.value = '';
   isLoading.value = true;

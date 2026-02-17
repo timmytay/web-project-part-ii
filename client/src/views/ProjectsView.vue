@@ -7,7 +7,8 @@ const projects = ref([]);
 const projectToAdd = ref({});
 const projectToEdit = ref({});
 const stats = ref(null);
-
+const exporting = ref(false);
+// здесь у нас проекты
 const filters = ref({
   name: ''
 });
@@ -15,7 +16,6 @@ const filters = ref({
 const filteredProjects = computed(() => {
   return projects.value.filter(project => {
     const matchesName = project.name.toLowerCase().includes(filters.value.name.toLowerCase());
-    
     return matchesName;
   });
 });
@@ -85,6 +85,31 @@ async function onRemoveClick(project) {
   }
 }
 
+async function exportToExcel() {
+  try {
+    exporting.value = true;
+    
+    const response = await axios.get("/api/projects/export-excel/", {
+      responseType: 'blob'
+    });
+    
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'projects.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+  } catch (error) {
+    console.error('Ошибка экспорта:', error);
+    alert('Не удалось выгрузить данные');
+  } finally {
+    exporting.value = false;
+  }
+}
+
 onBeforeMount(async () => {
   await Promise.all([fetchProjects(), fetchStats()]);
 })
@@ -93,7 +118,17 @@ onBeforeMount(async () => {
 <template>
   <div class="container-fluid">
     <div class="p-2">
-      <h2>Проекты</h2>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Проекты</h2>
+        <button 
+          class="btn btn-outline-success btn-sm" 
+          @click="exportToExcel" 
+          :disabled="exporting || projects.length === 0"
+        >
+          <span v-if="exporting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          <span v-else>Загрузить в Excel</span>
+        </button>
+      </div>
       
       <form @submit.prevent.stop="onProjectAdd" class="mb-4">
         <div class="row g-2">
@@ -115,7 +150,6 @@ onBeforeMount(async () => {
         </div>
       </form>
 
-      <!-- Панель фильтров -->
       <div class="filters-panel mb-4">
         <h5>Фильтры</h5>
         <div class="row g-3">
@@ -138,7 +172,6 @@ onBeforeMount(async () => {
           </div>
         </div>
         
-        <!-- Информация о количестве отфильтрованных записей -->
         <div class="filter-info mt-2 text-muted small">
           Показано: <b>{{ filteredProjects.length }}</b> из <b>{{ projects.length }}</b>
         </div>
@@ -155,7 +188,6 @@ onBeforeMount(async () => {
       </div>
       
       <div v-else>
-        <!-- Сообщение если ничего не найдено -->
         <div v-if="filteredProjects.length === 0" class="alert alert-info">
           Проекты не найдены
         </div>

@@ -1,11 +1,10 @@
 <script setup>
 import { ref, onBeforeMount } from 'vue';
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import { useRouter } from 'vue-router'
 import { useAuthStore} from './stores/auth';
 import { storeToRefs } from 'pinia';
-
+// приложение
 const router = useRouter()
 const userInfoStore = useAuthStore();
 const {is_authenticated} = storeToRefs(userInfoStore)

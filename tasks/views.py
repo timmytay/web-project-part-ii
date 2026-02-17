@@ -10,3 +10,4 @@ class ShowTaskView(TemplateView):
         context["tasks"] = Task.objects.all()
         context["projects"] = Project.objects.all()
         return context
+""" здесь находится мини-страница (1 зад-е джабы)"""

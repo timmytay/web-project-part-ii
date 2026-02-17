@@ -16,7 +16,7 @@ const removeImageFlag = ref(false);
 const imageViewUrl = ref('');
 const imageViewModal = ref(null);
 const stats = ref(null);
-
+// задания
 const filters = ref({
   title: '',
   column: '',
@@ -106,7 +106,7 @@ function taskEditPictureChange() {
     taskEditImageUrl.value = '';
   }
 }
-
+// открытие модальное картинки
 function openImageViewModal(imageUrl) {
   imageViewUrl.value = imageUrl;
 
@@ -128,7 +128,7 @@ function openImageViewModal(imageUrl) {
     imageViewModal.value = { handleEsc };
   }
 }
-
+// как закрыть картинку
 function closeImageViewModal() {
   const modalElement = document.getElementById('imageViewModal');
   const backdrop = document.getElementById('imageViewModalBackdrop');
@@ -146,7 +146,7 @@ function closeImageViewModal() {
   imageViewUrl.value = '';
   imageViewModal.value = null;
 }
-
+// добавление таски
 async function onTaskAdd() {
   try {
     const formData = new FormData();
@@ -175,7 +175,7 @@ async function onTaskAdd() {
     alert('Ошибка при добавлении задачи');
   }
 }
-
+//редактирование таски по клику
 async function onTaskEditClick(task) {
   taskToEdit.value = { ...task };
   taskToEditOriginal.value = { ...task };
@@ -187,7 +187,7 @@ async function onTaskEditClick(task) {
     taskEditPictureRef.value.value = '';
   }
 }
-
+// здесь что происходит
 async function onUpdateTask() {
   try {
     const formData = new FormData();

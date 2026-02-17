@@ -5,16 +5,16 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import serializers
 from django.contrib.auth import authenticate, login, logout
-
-from django.db.models import Avg, Count, Max, Min
+from django.http import HttpResponse
+import openpyxl
+from django.db.models import Count
 
 from .models import *
 from .serializers import (
     ProjectSerializer, ColumnSerializer, TaskSerializer, 
     CommentSerializer, TimeTrackingSerializer, UserProfileSerializer
 )
-
-
+"""апи проекта"""
 class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin, 
                      mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = Project.objects.all()
@@ -42,7 +42,7 @@ class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
 
     class StatsSerializer(serializers.Serializer):
         count = serializers.IntegerField()
-    
+    """получение статистики. здесь мы будем просто делать обычное ч-ло проектов, тасков, юзеров, врем. меток и т.д."""
     @action(detail=False, methods=["GET"], url_path="stats")
     def get_stats(self, request, *args, **kwargs):
         qs = self.get_queryset()
@@ -51,8 +51,38 @@ class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
         )
         serializer = self.StatsSerializer(instance=stats)
         return Response(serializer.data)
+    @action(detail=False, methods=["GET"], url_path="export-excel")
+    def export_excel(self, request, *args, **kwargs):
+        """
+        экспорт проектов в файл Excel. для этого нам нужен опенпихл
+        """
+        projects = self.get_queryset()
+        
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Проекты"
+        
+        ws.append(["ID", "Название", "Описание", "Дата создания", "Пользователь"])
+        
+        for project in projects:
+            ws.append([
+                project.id,
+                project.name,
+                project.description or "",
+                project.created_at.strftime('%d.%m.%Y %H:%M') if project.created_at else "",
+                project.user.username if project.user else "",
+            ])
+        
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
 
-
+        """загрузка списка проектов"""
+        response['Content-Disposition'] = 'attachment; filename="projects.xlsx"'
+        
+        wb.save(response)
+        return response
+"""апи колонок"""
 class ColumnViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
                     mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = Column.objects.all()
@@ -97,7 +127,7 @@ class ColumnViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelM
         serializer = self.StatsSerializer(instance=stats)
         return Response(serializer.data)
 
-
+"""апи задания"""
 class TaskViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
                   mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = Task.objects.all()
@@ -150,7 +180,7 @@ class TaskViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
         serializer = self.StatsSerializer(instance=stats)
         return Response(serializer.data)
 
-
+"""апи коммента"""
 class CommentViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
                      mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = Comment.objects.all()
@@ -203,7 +233,7 @@ class CommentViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
         serializer = self.StatsSerializer(instance=stats)
         return Response(serializer.data)
 
-
+"""апи метки времени"""
 class TimeTrackingViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
                           mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = TimeTracking.objects.all()
@@ -256,13 +286,11 @@ class TimeTrackingViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.Update
         serializer = self.StatsSerializer(instance=stats)
         return Response(serializer.data)
 
-
+"""апи юзверя"""
 class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
                   mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     """
-    ViewSet для работы с профилем пользователя.
-    Суперюзер может видеть и редактировать все профили.
-    Обычные пользователи - только свой профиль.
+    вьюсет для работы с профилем пользователя
     """
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
@@ -270,7 +298,7 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
 
     def get_queryset(self):
         """
-        Суперюзер видит все профили, обычные пользователи - только свой
+        суперюзер видит все профили, обычные пользователи только свой
         """
         qs = super().get_queryset()
         
@@ -284,13 +312,10 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
         return qs
 
     def get_object(self):
-        """
-        Возвращает профиль в зависимости от прав пользователя
-        """
         if self.request.user.is_superuser and 'pk' in self.kwargs:
             return super().get_object()
         
-        profile, created = UserProfile.objects.get_or_create(user=self.request.user)
+        profile= UserProfile.objects.get_or_create(user=self.request.user)
         return profile
 
     @action(url_path="my", methods=["GET"], detail=False)
