@@ -14,7 +14,6 @@ const filters = ref({
   name: '',
   project: ''
 });
-// страница колонок
 const projectsByID = computed(() => {
   return _.keyBy(projects.value, x => x.id)
 })
@@ -22,9 +21,9 @@ const projectsByID = computed(() => {
 const filteredColumns = computed(() => {
   return columns.value.filter(column => {
     const matchesName = column.name.toLowerCase().includes(filters.value.name.toLowerCase());
-    
+
     const matchesProject = !filters.value.project || column.project === parseInt(filters.value.project);
-    
+
     return matchesName && matchesProject;
   });
 });
@@ -49,12 +48,8 @@ async function fetchColumns() {
 }
 
 async function fetchStats() {
-  try {
-    const r = await axios.get("/api/columns/stats/");
-    stats.value = r.data;
-  } catch (error) {
-    console.error('Ошибка загрузки статистики колонок:', error);
-  }
+  const r = await axios.get("/api/columns/stats/");
+  stats.value = r.data;
 }
 
 async function onColumnEditClick(column) {
@@ -72,12 +67,15 @@ async function onColumnAdd() {
   await axios.post("/api/columns/", {
     ...ColumnToAdd.value,
   });
+  ColumnToAdd.value = {};
   await Promise.all([fetchColumns(), fetchStats()]);
 }
 
 async function onRemoveClick(column) {
-  await axios.delete(`/api/columns/${column.id}/`);
-  await Promise.all([fetchColumns(), fetchStats()]);
+  if (confirm('Вы уверены, что хотите удалить колонку?')) {
+    await axios.delete(`/api/columns/${column.id}/`);
+    await Promise.all([fetchColumns(), fetchStats()]);
+  }
 }
 
 onBeforeMount(async () => {
@@ -94,24 +92,13 @@ onBeforeMount(async () => {
         <div class="row">
           <div class="col">
             <div class="form-floating">
-              <input 
-                type="text" 
-                class="form-control" 
-                id="addColumnName"
-                v-model="ColumnToAdd.name" 
-                required
-              >
+              <input type="text" class="form-control" id="addColumnName" v-model="ColumnToAdd.name" required>
               <label for="addColumnName">Название</label>
             </div>
           </div>
           <div class="col-auto">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="addColumnProject"
-                v-model="ColumnToAdd.project" 
-                required
-              >
+              <select class="form-select" id="addColumnProject" v-model="ColumnToAdd.project" required>
                 <option :value="p.id" v-for="p in projects">{{ p.name }}</option>
               </select>
               <label for="addColumnProject">Проект</label>
@@ -123,29 +110,19 @@ onBeforeMount(async () => {
         </div>
       </form>
 
-      <!-- Панель фильтров -->
       <div class="filters-panel mb-4">
         <h5>Фильтры</h5>
         <div class="row g-3">
           <div class="col-md-5">
             <div class="form-floating">
-              <input 
-                type="text" 
-                class="form-control" 
-                id="filterName"
-                v-model="filters.name"
-                placeholder="Введите название"
-              >
+              <input type="text" class="form-control" id="filterName" v-model="filters.name"
+                placeholder="Введите название">
               <label for="filterName">По названию</label>
             </div>
           </div>
           <div class="col-md-5">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="filterProject"
-                v-model="filters.project"
-              >
+              <select class="form-select" id="filterProject" v-model="filters.project">
                 <option value="">Все проекты</option>
                 <option :value="p.id" v-for="p in projects">{{ p.name }}</option>
               </select>
@@ -158,8 +135,7 @@ onBeforeMount(async () => {
             </button>
           </div>
         </div>
-        
-        <!-- Информация о количестве отфильтрованных записей -->
+
         <div class="filter-info mt-2 text-muted small">
           Показано: <b>{{ filteredColumns.length }}</b> из <b>{{ columns.length }}</b>
         </div>
@@ -176,21 +152,15 @@ onBeforeMount(async () => {
       </div>
 
       <div v-else>
-        <!-- Сообщение если ничего не найдено -->
         <div v-if="filteredColumns.length === 0" class="alert alert-info">
           Колонки не найдены
         </div>
-        
+
         <div v-for="item in filteredColumns" class="column-item" :key="item.id">
           <div>{{ item.name }}</div>
           <div>{{ projectsByID[item.project]?.name }}</div>
-          <button 
-            type="button" 
-            class="btn btn-success" 
-            @click="onColumnEditClick(item)" 
-            data-bs-toggle="modal"
-            data-bs-target="#editColumnModal"
-          >
+          <button type="button" class="btn btn-success" @click="onColumnEditClick(item)" data-bs-toggle="modal"
+            data-bs-target="#editColumnModal">
             <i class="bi bi-pencil"></i>
           </button>
           <button class="btn btn-danger" @click="onRemoveClick(item)">
@@ -211,22 +181,13 @@ onBeforeMount(async () => {
             <div class="row">
               <div class="col">
                 <div class="form-floating">
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    id="editColumnName"
-                    v-model="ColumnToEdit.name"
-                  >
+                  <input type="text" class="form-control" id="editColumnName" v-model="ColumnToEdit.name">
                   <label for="editColumnName">Название</label>
                 </div>
               </div>
               <div class="col-auto">
                 <div class="form-floating">
-                  <select 
-                    class="form-select" 
-                    id="editColumnProject"
-                    v-model="ColumnToEdit.project"
-                  >
+                  <select class="form-select" id="editColumnProject" v-model="ColumnToEdit.project">
                     <option :value="p.id" v-for="p in projects">{{ p.name }}</option>
                   </select>
                   <label for="editColumnProject">Проект</label>
@@ -236,12 +197,7 @@ onBeforeMount(async () => {
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-            <button 
-              type="button" 
-              class="btn btn-primary" 
-              data-bs-dismiss="modal"
-              @click="onUpdateColumn"
-            >
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" @click="onUpdateColumn">
               Сохранить
             </button>
           </div>
@@ -257,7 +213,7 @@ onBeforeMount(async () => {
   background-color: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #dee2e6;
-  
+
   h5 {
     margin-bottom: 1rem;
     color: #495057;
@@ -281,4 +237,4 @@ onBeforeMount(async () => {
   align-content: center;
   align-items: center;
 }
-</style>ы
+</style>

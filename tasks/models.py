@@ -4,8 +4,6 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 from django.contrib.auth.models import User
 
-"""модели для базы данных"""
-
 class Project(models.Model):
     name = models.CharField("Название", max_length=255)
     description = models.TextField("Описание", blank=True)
@@ -54,14 +52,9 @@ class Task(models.Model):
     due_date = models.DateField("Срок выполнения", null=True, blank=True)
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
     updated_at = models.DateTimeField("Дата обновления", auto_now=True)
-
     picture = models.ImageField("Изображение", null=True, upload_to="tasks")
-
-    creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name="Создатель", null=True, blank=True, related_name='created_tasks'
-    )
-    
-    assignee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name="Исполнитель", null=True, blank=True, related_name='assigned_tasks'
-    )
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name="Создатель", null=True, blank=True, related_name='created_tasks')
+    assignee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name="Исполнитель", null=True, blank=True, related_name='assigned_tasks')
 
     class Meta:
         verbose_name = "Задача"
@@ -75,7 +68,6 @@ class Comment(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, verbose_name="Задача")
     text = models.TextField("Текст комментария")
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
-
     picture = models.ImageField("Изображение", null=True, upload_to="tasks")
     class Meta:
         verbose_name = "Комментарий"
@@ -117,7 +109,7 @@ class UserProfile(TimestampModel):
         DEVELOPER = 'developer', 'Разработчик'
         VIEWER = 'viewer', 'Наблюдатель'
     
-    name = models.TextField(null=True)
+    name = models.TextField(null=True, blank=True)
     birthday = models.DateField(null=True)
     user = models.OneToOneField("auth.User", on_delete=models.CASCADE)
     type = models.TextField(choices=Type, null=True)

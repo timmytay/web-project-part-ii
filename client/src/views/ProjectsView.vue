@@ -8,7 +8,7 @@ const projectToAdd = ref({});
 const projectToEdit = ref({});
 const stats = ref(null);
 const exporting = ref(false);
-// здесь у нас проекты
+
 const filters = ref({
   name: ''
 });
@@ -27,36 +27,24 @@ function resetFilters() {
 }
 
 async function fetchProjects() {
-  try {
-    loading.value = true;
-    const r = await axios.get("/api/projects/");
-    projects.value = r.data;
-  } catch (error) {
-    console.error('Ошибка загрузки проектов:', error);
-  } finally {
-    loading.value = false;
-  }
+  loading.value = true;
+  const r = await axios.get("/api/projects/");
+  projects.value = r.data;
+  loading.value = false;
 }
 
 async function fetchStats() {
-  try {
-    const r = await axios.get("/api/projects/stats/");
-    stats.value = r.data;
-  } catch (error) {
-    console.error('Ошибка загрузки статистики проектов:', error);
-  }
+  const r = await axios.get("/api/projects/stats/");
+  stats.value = r.data;
+
 }
 
 async function onProjectAdd() {
-  try {
-    await axios.post("/api/projects/", {
-      ...projectToAdd.value,
-    });
-    projectToAdd.value = {};
-    await Promise.all([fetchProjects(), fetchStats()]);
-  } catch (error) {
-    console.error('Ошибка добавления проекта:', error);
-  }
+  await axios.post("/api/projects/", {
+    ...projectToAdd.value,
+  });
+  projectToAdd.value = {};
+  await Promise.all([fetchProjects(), fetchStats()]);
 }
 
 async function onProjectEditClick(project) {
@@ -64,50 +52,36 @@ async function onProjectEditClick(project) {
 }
 
 async function onUpdateProject() {
-  try {
-    await axios.put(`/api/projects/${projectToEdit.value.id}/`, {
-      ...projectToEdit.value
-    });
-    await Promise.all([fetchProjects(), fetchStats()]);
-  } catch (error) {
-    console.error('Ошибка обновления проекта:', error);
-  }
+  await axios.put(`/api/projects/${projectToEdit.value.id}/`, {
+    ...projectToEdit.value
+  });
+  await Promise.all([fetchProjects(), fetchStats()]);
 }
 
 async function onRemoveClick(project) {
   if (confirm('Вы уверены, что хотите удалить проект?')) {
-    try {
-      await axios.delete(`/api/projects/${project.id}/`);
-      await Promise.all([fetchProjects(), fetchStats()]);
-    } catch (error) {
-      console.error('Ошибка удаления проекта:', error);
-    }
+    await axios.delete(`/api/projects/${project.id}/`);
+    await Promise.all([fetchProjects(), fetchStats()]);
   }
 }
 
 async function exportToExcel() {
-  try {
-    exporting.value = true;
-    
-    const response = await axios.get("/api/projects/export-excel/", {
-      responseType: 'blob'
-    });
-    
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'projects.xlsx');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-    
-  } catch (error) {
-    console.error('Ошибка экспорта:', error);
-    alert('Не удалось выгрузить данные');
-  } finally {
-    exporting.value = false;
-  }
+  exporting.value = true;
+
+  const response = await axios.get("/api/projects/export-excel/", {
+    responseType: 'blob'
+  });
+
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'projects.xlsx');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+
+  exporting.value = false;
 }
 
 onBeforeMount(async () => {
@@ -120,16 +94,13 @@ onBeforeMount(async () => {
     <div class="p-2">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Проекты</h2>
-        <button 
-          class="btn btn-outline-success btn-sm" 
-          @click="exportToExcel" 
-          :disabled="exporting || projects.length === 0"
-        >
+        <button class="btn btn-outline-success btn-sm" @click="exportToExcel"
+          :disabled="exporting || projects.length === 0">
           <span v-if="exporting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
           <span v-else>Загрузить в Excel</span>
         </button>
       </div>
-      
+
       <form @submit.prevent.stop="onProjectAdd" class="mb-4">
         <div class="row g-2">
           <div class="col-md-4">
@@ -155,13 +126,8 @@ onBeforeMount(async () => {
         <div class="row g-3">
           <div class="col-md-10">
             <div class="form-floating">
-              <input 
-                type="text" 
-                class="form-control" 
-                id="filterName"
-                v-model="filters.name"
-                placeholder="Введите название"
-              >
+              <input type="text" class="form-control" id="filterName" v-model="filters.name"
+                placeholder="Введите название">
               <label for="filterName">По названию проекта</label>
             </div>
           </div>
@@ -171,7 +137,7 @@ onBeforeMount(async () => {
             </button>
           </div>
         </div>
-        
+
         <div class="filter-info mt-2 text-muted small">
           Показано: <b>{{ filteredProjects.length }}</b> из <b>{{ projects.length }}</b>
         </div>
@@ -186,12 +152,12 @@ onBeforeMount(async () => {
           <span class="visually-hidden">Загрузка...</span>
         </div>
       </div>
-      
+
       <div v-else>
         <div v-if="filteredProjects.length === 0" class="alert alert-info">
           Проекты не найдены
         </div>
-        
+
         <div v-for="project in filteredProjects" :key="project.id" class="project-item card mb-2">
           <div class="card-body">
             <div class="row align-items-center">
@@ -203,10 +169,8 @@ onBeforeMount(async () => {
                 <small class="text-muted">Создан: {{ new Date(project.created_at).toLocaleDateString() }}</small>
               </div>
               <div class="col-md-3 text-end">
-                <button type="button" class="btn btn-success btn-sm" 
-                        @click="onProjectEditClick(project)" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#editProjectModal">
+                <button type="button" class="btn btn-success btn-sm" @click="onProjectEditClick(project)"
+                  data-bs-toggle="modal" data-bs-target="#editProjectModal">
                   <i class="bi bi-pencil"></i>
                 </button>
                 <button class="btn btn-danger btn-sm ms-1" @click="onRemoveClick(project)">
@@ -238,8 +202,8 @@ onBeforeMount(async () => {
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" 
-                    @click="onUpdateProject">Сохранить</button>
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal"
+              @click="onUpdateProject">Сохранить</button>
           </div>
         </div>
       </div>
@@ -253,7 +217,7 @@ onBeforeMount(async () => {
   background-color: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #dee2e6;
-  
+
   h5 {
     margin-bottom: 1rem;
     color: #495057;
@@ -268,6 +232,7 @@ onBeforeMount(async () => {
 .project-item {
   transition: box-shadow 0.2s;
 }
+
 .project-item:hover {
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }

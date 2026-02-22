@@ -10,8 +10,7 @@ const isLoading = ref(false);
 
 const authStore = useAuthStore();
 const router = useRouter();
-// страничка входа в систему
-async function onLoginFormSubmit() {
+async function clickForm() {
   errorMessage.value = '';
   isLoading.value = true;
   
@@ -37,7 +36,7 @@ async function onLoginFormSubmit() {
 </script>
 
 <template>
-  <form @submit.stop.prevent="onLoginFormSubmit" class="form d-flex flex-column p-3" style="gap: 8px">
+  <form @submit.stop.prevent="clickForm" class="form d-flex flex-column p-3" style="gap: 8px">
     <input placeholder="Логин (пример: tay)" class="form-control" type="text" v-model="username" :disabled="isLoading" required>
     <input placeholder="Пароль" class="form-control" type="password" v-model="password" :disabled="isLoading" required>
     <button class="btn btn-info" :disabled="isLoading">
@@ -49,6 +48,5 @@ async function onLoginFormSubmit() {
     </div>
   </form>
 </template>
-
 <style>
 </style>

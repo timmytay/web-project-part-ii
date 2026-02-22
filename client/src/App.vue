@@ -2,17 +2,16 @@
 import { ref, onBeforeMount } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router'
-import { useAuthStore} from './stores/auth';
+import { useAuthStore } from './stores/auth';
 import { storeToRefs } from 'pinia';
-// приложение
 const router = useRouter()
 const userInfoStore = useAuthStore();
-const {is_authenticated} = storeToRefs(userInfoStore)
+const { is_authenticated } = storeToRefs(userInfoStore)
 
 async function onLogout() {
   const r = await axios.post("/api/users/logout/")
   userInfoStore.fetchUserInfo();
-  
+
   router.go()
 }
 
@@ -50,7 +49,9 @@ onBeforeMount(async () => {
             <router-link class="nav-link" to="/users">Пользователи</router-link>
           </li>
         </ul>
-          <button @click="onLogout" v-if="is_authenticated">Выйти</button>
+        <button @click="onLogout" v-if="is_authenticated" class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-box-arrow-right me-1"></i> Выйти
+        </button>
       </div>
     </nav>
   </div>

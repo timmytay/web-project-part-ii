@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from faker import Faker
 import random
-from datetime import datetime, timedelta
+from datetime import timedelta
 from tasks.models import Project, Column, Task, Comment, TimeTracking, UserProfile
 
 class Command(BaseCommand):
@@ -25,12 +25,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         fake = Faker(['ru_RU'])
         
-        # фейлсейв (если получится какой-то неописуемый кош мар)
-        # Task.objects.all().delete()
-        # Comment.objects.all().delete()
-        # TimeTracking.objects.all().delete()
-        # Column.objects.all().delete()
-        # Project.objects.all().delete()
         users = self.create_users(fake)
         self.create_user_profiles(fake, users)
         projects = self.create_projects(fake, users, options['projects'])
@@ -41,7 +35,7 @@ class Command(BaseCommand):
         self.print_statistics()
 
     def create_users(self, fake):
-        """Создание тестовых пользователей"""
+        """создание тестовых пользователей"""
         users = list(User.objects.all())
         
         if len(users) < 20:
@@ -63,7 +57,7 @@ class Command(BaseCommand):
         return users
 
     def create_user_profiles(self, fake, users):
-        """Создание профилей для пользователей"""
+        """создание профилей для пользователей"""
         
         profile_types = ['admin', 'manager', 'developer', 'viewer']
         
@@ -79,7 +73,7 @@ class Command(BaseCommand):
         self.stdout.write(f"Создано {UserProfile.objects.count()} профилей")
 
     def create_projects(self, fake, users, num_projects):
-        """Создание проектов"""
+        """создание проектов"""
         
         projects = list(Project.objects.all())
         
@@ -95,8 +89,8 @@ class Command(BaseCommand):
         self.stdout.write(f"Создано/получено {len(projects)} проектов")
         return projects
 
-    def create_columns(self, fake, projects):
-        """Создание колонок для проектов"""
+    def create_columns(self, projects):
+        """создание колонок для проектов"""
         
         columns = list(Column.objects.all())
         column_names = ['Бэклог', 'К выполнению', 'В работе', 'На проверке', 'Выполнено', 'Архив']
@@ -116,7 +110,7 @@ class Command(BaseCommand):
         return columns
 
     def create_tasks(self, fake, users, columns, min_tasks):
-        """Создание задач"""
+        """создание задач"""
         
         tasks = list(Task.objects.all())
 
@@ -143,9 +137,9 @@ class Command(BaseCommand):
         return tasks
 
     def create_comments(self, fake, users, tasks):
-        """Создание комментариев к задачам"""
+        """создание комментариев к задачам"""
         
-        target_comments = 3000  # Целевое количество комментариев
+        target_comments = 3000
         current_comments = Comment.objects.count()
         
         if current_comments < target_comments:
@@ -172,7 +166,7 @@ class Command(BaseCommand):
         self.stdout.write(f"  Создано {Comment.objects.count()} комментариев")
 
     def create_time_trackings(self, fake, users, tasks):
-        """Создание учета времени"""
+        """создание учета времени"""
         
         target_trackings = 2000
         current_trackings = TimeTracking.objects.count()
@@ -208,7 +202,7 @@ class Command(BaseCommand):
         self.stdout.write(f"  Создано {TimeTracking.objects.count()} записей учета времени")
 
     def print_statistics(self):
-        """Вывод статистики по сгенерированным данным"""
+        """вывод статистики по данным"""
         
         self.stdout.write(f"Пользователи: {User.objects.count()}")
         self.stdout.write(f"Профили пользователей: {UserProfile.objects.count()}")
@@ -227,3 +221,4 @@ class Command(BaseCommand):
         self.stdout.write(f"  В работе: {Task.objects.filter(status='in_progress').count()}")
         self.stdout.write(f"  На проверке: {Task.objects.filter(status='review').count()}")
         self.stdout.write(f"  Выполнено: {Task.objects.filter(status='done').count()}")
+        """6 задание, то есть факер/фейкер"""

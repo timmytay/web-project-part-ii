@@ -16,12 +16,9 @@ const removeImageFlag = ref(false);
 const imageViewUrl = ref('');
 const imageViewModal = ref(null);
 const stats = ref(null);
-// задания
+
 const filters = ref({
-  title: '',
-  column: '',
-  status: '',
-  priority: ''
+  title: '', column: '', status: '', priority: ''
 });
 
 const statusOptions = [
@@ -37,57 +34,33 @@ const priorityOptions = [
   { value: 'high', label: 'Высокий' }
 ];
 
-const filteredTasks = computed(() => {
-  return tasks.value.filter(task => {
-    const matchesTitle = task.title.toLowerCase().includes(filters.value.title.toLowerCase());
-    
-    const matchesColumn = !filters.value.column || task.column === parseInt(filters.value.column);
-    
-    const matchesStatus = !filters.value.status || task.status === filters.value.status;
-    
-    const matchesPriority = !filters.value.priority || task.priority === filters.value.priority;
-    
-    return matchesTitle && matchesColumn && matchesStatus && matchesPriority;
-  });
-});
+const filteredTasks = computed(() => tasks.value.filter(task => {
+  const matchesTitle = task.title.toLowerCase().includes(filters.value.title.toLowerCase());
+  const matchesColumn = !filters.value.column || task.column === parseInt(filters.value.column);
+  const matchesStatus = !filters.value.status || task.status === filters.value.status;
+  const matchesPriority = !filters.value.priority || task.priority === filters.value.priority;
+  return matchesTitle && matchesColumn && matchesStatus && matchesPriority;
+}));
 
 function resetFilters() {
-  filters.value = {
-    title: '',
-    column: '',
-    status: '',
-    priority: ''
-  };
+  filters.value = {title: '', column: '', status: '', priority: ''};
 }
 
 async function fetchTasks() {
-  try {
-    loading.value = true;
-    const r = await axios.get("/api/tasks/");
-    tasks.value = r.data;
-  } catch (error) {
-    console.error('Ошибка загрузки задач:', error);
-  } finally {
-    loading.value = false;
-  }
+  loading.value = true;
+  const r = await axios.get("/api/tasks/");
+  tasks.value = r.data;
+  loading.value = false;
 }
 
 async function fetchColumns() {
-  try {
-    const r = await axios.get("/api/columns/");
-    columns.value = r.data;
-  } catch (error) {
-    console.error('Ошибка загрузки колонок:', error);
-  }
+  const r = await axios.get("/api/columns/");
+  columns.value = r.data;
 }
 
 async function fetchStats() {
-  try {
-    const r = await axios.get("/api/tasks/stats/");
-    stats.value = r.data;
-  } catch (error) {
-    console.error('Ошибка загрузки статистики:', error);
-  }
+  const r = await axios.get("/api/tasks/stats/");
+  stats.value = r.data;
 }
 
 function taskAddPictureChange() {
@@ -106,7 +79,7 @@ function taskEditPictureChange() {
     taskEditImageUrl.value = '';
   }
 }
-// открытие модальное картинки
+
 function openImageViewModal(imageUrl) {
   imageViewUrl.value = imageUrl;
 
@@ -128,7 +101,7 @@ function openImageViewModal(imageUrl) {
     imageViewModal.value = { handleEsc };
   }
 }
-// как закрыть картинку
+
 function closeImageViewModal() {
   const modalElement = document.getElementById('imageViewModal');
   const backdrop = document.getElementById('imageViewModalBackdrop');
@@ -146,36 +119,31 @@ function closeImageViewModal() {
   imageViewUrl.value = '';
   imageViewModal.value = null;
 }
-// добавление таски
+
 async function onTaskAdd() {
-  try {
-    const formData = new FormData();
+  const formData = new FormData();
 
-    if (taskAddPictureRef.value.files[0]) {
-      formData.append('picture', taskAddPictureRef.value.files[0]);
-    }
-
-    for (const key in taskToAdd.value) {
-      if (taskToAdd.value[key] !== undefined && taskToAdd.value[key] !== null) {
-        formData.append(key, taskToAdd.value[key]);
-      }
-    }
-
-    await axios.post("/api/tasks/", formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-
-    taskToAdd.value = {};
-    taskAddImageUrl.value = '';
-    if (taskAddPictureRef.value) taskAddPictureRef.value.value = '';
-
-    await Promise.all([fetchTasks(), fetchStats()]);
-  } catch (error) {
-    console.error('Ошибка добавления задачи:', error);
-    alert('Ошибка при добавлении задачи');
+  if (taskAddPictureRef.value.files[0]) {
+    formData.append('picture', taskAddPictureRef.value.files[0]);
   }
+
+  for (const key in taskToAdd.value) {
+    if (taskToAdd.value[key] !== undefined && taskToAdd.value[key] !== null) {
+      formData.append(key, taskToAdd.value[key]);
+    }
+  }
+
+  await axios.post("/api/tasks/", formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+
+  taskToAdd.value = {};
+  taskAddImageUrl.value = '';
+  if (taskAddPictureRef.value) taskAddPictureRef.value.value = '';
+
+  await Promise.all([fetchTasks(), fetchStats()]);
 }
-//редактирование таски по клику
+
 async function onTaskEditClick(task) {
   taskToEdit.value = { ...task };
   taskToEditOriginal.value = { ...task };
@@ -187,55 +155,45 @@ async function onTaskEditClick(task) {
     taskEditPictureRef.value.value = '';
   }
 }
-// здесь что происходит
+
 async function onUpdateTask() {
-  try {
-    const formData = new FormData();
+  const formData = new FormData();
 
-    if (taskEditPictureRef.value.files[0]) {
+  if (taskEditPictureRef.value.files[0]) {
 
-      formData.append('picture', taskEditPictureRef.value.files[0]);
-    } else if (removeImageFlag.value && taskToEditOriginal.value?.picture) {
+    formData.append('picture', taskEditPictureRef.value.files[0]);
+  } else if (removeImageFlag.value && taskToEditOriginal.value?.picture) {
 
-      formData.append('picture', '');
-    }
-
-    formData.append('title', taskToEdit.value.title);
-    formData.append('description', taskToEdit.value.description);
-    formData.append('column', taskToEdit.value.column);
-    formData.append('status', taskToEdit.value.status);
-    formData.append('priority', taskToEdit.value.priority);
-    if (taskToEdit.value.due_date) {
-      formData.append('due_date', taskToEdit.value.due_date);
-    }
-
-    await axios.patch(`/api/tasks/${taskToEdit.value.id}/`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-
-    taskEditImageUrl.value = '';
-    taskToEdit.value = {};
-    taskToEditOriginal.value = null;
-    removeImageFlag.value = false;
-
-    if (taskEditPictureRef.value) taskEditPictureRef.value.value = '';
-
-    await Promise.all([fetchTasks(), fetchStats()]);
-  } catch (error) {
-    console.error('Ошибка обновления задачи:', error);
-    alert('Ошибка при обновлении задачи');
+    formData.append('picture', '');
   }
+
+  formData.append('title', taskToEdit.value.title);
+  formData.append('description', taskToEdit.value.description);
+  formData.append('column', taskToEdit.value.column);
+  formData.append('status', taskToEdit.value.status);
+  formData.append('priority', taskToEdit.value.priority);
+  if (taskToEdit.value.due_date) {
+    formData.append('due_date', taskToEdit.value.due_date);
+  }
+
+  await axios.patch(`/api/tasks/${taskToEdit.value.id}/`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+
+  taskEditImageUrl.value = '';
+  taskToEdit.value = {};
+  taskToEditOriginal.value = null;
+  removeImageFlag.value = false;
+
+  if (taskEditPictureRef.value) taskEditPictureRef.value.value = '';
+
+  await Promise.all([fetchTasks(), fetchStats()]);
 }
 
 async function onRemoveClick(task) {
   if (confirm('Вы уверены, что хотите удалить задачу?')) {
-    try {
-      await axios.delete(`/api/tasks/${task.id}/`);
-      await Promise.all([fetchTasks(), fetchStats()]);
-    } catch (error) {
-      console.error('Ошибка удаления задачи:', error);
-      alert('Ошибка при удалении задачи');
-    }
+    await axios.delete(`/api/tasks/${task.id}/`);
+    await Promise.all([fetchTasks(), fetchStats()]);
   }
 }
 
@@ -362,29 +320,19 @@ onBeforeMount(async () => {
         </div>
       </form>
 
-      <!-- Панель фильтров -->
       <div class="filters-panel mb-4">
         <h5>Фильтры</h5>
         <div class="row g-3">
           <div class="col-md-3">
             <div class="form-floating">
-              <input 
-                type="text" 
-                class="form-control" 
-                id="filterTitle"
-                v-model="filters.title"
-                placeholder="Введите название"
-              >
+              <input type="text" class="form-control" id="filterTitle" v-model="filters.title"
+                placeholder="Введите название">
               <label for="filterTitle">По названию</label>
             </div>
           </div>
           <div class="col-md-3">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="filterColumn"
-                v-model="filters.column"
-              >
+              <select class="form-select" id="filterColumn" v-model="filters.column">
                 <option value="">Все колонки</option>
                 <option :value="col.id" v-for="col in columns">{{ col.name }}</option>
               </select>
@@ -393,11 +341,7 @@ onBeforeMount(async () => {
           </div>
           <div class="col-md-2">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="filterStatus"
-                v-model="filters.status"
-              >
+              <select class="form-select" id="filterStatus" v-model="filters.status">
                 <option value="">Все статусы</option>
                 <option v-for="status in statusOptions" :value="status.value">
                   {{ status.label }}
@@ -408,11 +352,7 @@ onBeforeMount(async () => {
           </div>
           <div class="col-md-2">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="filterPriority"
-                v-model="filters.priority"
-              >
+              <select class="form-select" id="filterPriority" v-model="filters.priority">
                 <option value="">Все приоритеты</option>
                 <option v-for="priority in priorityOptions" :value="priority.value">
                   {{ priority.label }}
@@ -427,8 +367,7 @@ onBeforeMount(async () => {
             </button>
           </div>
         </div>
-        
-        <!-- Информация о количестве отфильтрованных записей -->
+
         <div class="filter-info mt-2 text-muted small">
           Показано: <b>{{ filteredTasks.length }}</b> из <b>{{ tasks.length }}</b>
         </div>
@@ -438,7 +377,6 @@ onBeforeMount(async () => {
         Всего задач: <strong>{{ stats.count }}</strong>
       </div>
 
-
       <div v-if="loading" class="text-center">
         <div class="spinner-border" role="status">
           <span class="visually-hidden">Загрузка...</span>
@@ -446,11 +384,10 @@ onBeforeMount(async () => {
       </div>
 
       <div v-else>
-        <!-- Сообщение если ничего не найдено -->
         <div v-if="filteredTasks.length === 0" class="alert alert-info">
           Задачи не найдены
         </div>
-        
+
         <div v-for="task in filteredTasks" :key="task.id" class="task-item card mb-2">
           <div class="card-body">
             <div class="row align-items-center">
@@ -664,7 +601,7 @@ onBeforeMount(async () => {
   background-color: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #dee2e6;
-  
+
   h5 {
     margin-bottom: 1rem;
     color: #495057;
@@ -678,10 +615,10 @@ onBeforeMount(async () => {
 
 .task-item {
   transition: box-shadow 0.2s;
-}
 
-.task-item:hover {
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  &:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  }
 }
 
 .img-thumbnail {
@@ -692,34 +629,34 @@ onBeforeMount(async () => {
 .clickable-image {
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-}
 
-.clickable-image:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
 }
 
 .position-relative {
   position: relative;
-}
 
-.image-hint {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  font-size: 10px;
-  text-align: center;
-  padding: 1px 2px;
-  opacity: 0;
-  transition: opacity 0.2s;
-  border-radius: 0 0 4px 4px;
-}
+  .image-hint {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 10px;
+    text-align: center;
+    padding: 1px 2px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    border-radius: 0 0 4px 4px;
+  }
 
-.position-relative:hover .image-hint {
-  opacity: 1;
+  &:hover .image-hint {
+    opacity: 1;
+  }
 }
 
 #imageViewModal {

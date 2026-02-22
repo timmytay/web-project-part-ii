@@ -1,8 +1,6 @@
 from rest_framework import serializers
 from .models import Project, Column, Task, Comment, TimeTracking, User, UserProfile
 
-"""поля"""
-
 class UserProfileSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
     
@@ -11,11 +9,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = UserProfile
-        fields = [
-            'id', 'username', 'email', 'password',
-            'name', 'birthday', 'type',
-            'created_at', 'updated_at', 'user'
-        ]
+        fields = ['id', 'username', 'email', 'password', 'name', 'birthday', 'type', 'created_at', 'updated_at', 'user']
         read_only_fields = ['user', 'created_at', 'updated_at']
 
     def create(self, validated_data):
@@ -28,7 +22,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         )
         
         profile = user.userprofile
-        
         profile.name = validated_data.get('name', profile.name)
         profile.birthday = validated_data.get('birthday', profile.birthday)
         profile.type = validated_data.get('type', profile.type)

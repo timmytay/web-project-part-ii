@@ -6,10 +6,8 @@ from model_bakery import baker
 from .models import Project, Column, Task, Comment, TimeTracking
 from django.utils import timezone
 import json
-
+"""2 задание джабы с тестами"""
 class APIDiscoveryTests(TestCase):
-    """тесты для обнаружения структуры API"""
-    
     def setUp(self):
         self.client = APIClient()
         self.user = baker.make(User)

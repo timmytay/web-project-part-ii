@@ -14,9 +14,8 @@ from .serializers import (
     ProjectSerializer, ColumnSerializer, TaskSerializer, 
     CommentSerializer, TimeTrackingSerializer, UserProfileSerializer
 )
-"""апи проекта"""
-class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin, 
-                     mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
+
+class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
@@ -42,20 +41,16 @@ class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
 
     class StatsSerializer(serializers.Serializer):
         count = serializers.IntegerField()
-    """получение статистики. здесь мы будем просто делать обычное ч-ло проектов, тасков, юзеров, врем. меток и т.д."""
+
     @action(detail=False, methods=["GET"], url_path="stats")
     def get_stats(self, request, *args, **kwargs):
-        qs = self.get_queryset()
-        stats = qs.aggregate(
-            count = Count("*"),
-        )
+        stats = Project.objects.aggregate(count = Count("*"))
         serializer = self.StatsSerializer(instance=stats)
         return Response(serializer.data)
+    
     @action(detail=False, methods=["GET"], url_path="export-excel")
     def export_excel(self, request, *args, **kwargs):
-        """
-        экспорт проектов в файл Excel. для этого нам нужен опенпихл
-        """
+        """экспорт проектов в файл Excel. для этого нам нужен опенпихл"""
         projects = self.get_queryset()
         
         wb = openpyxl.Workbook()
@@ -64,27 +59,25 @@ class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
         
         ws.append(["ID", "Название", "Описание", "Дата создания", "Пользователь"])
         
-        for project in projects:
+        for p in projects:
             ws.append([
-                project.id,
-                project.name,
-                project.description or "",
-                project.created_at.strftime('%d.%m.%Y %H:%M') if project.created_at else "",
-                project.user.username if project.user else "",
+                p.id,
+                p.name,
+                p.description or "",
+                p.created_at.strftime('%d.%m.%Y %H:%M') if p.created_at else "",
+                p.user.username if p.user else "",
             ])
         
         response = HttpResponse(
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
 
-        """загрузка списка проектов"""
         response['Content-Disposition'] = 'attachment; filename="projects.xlsx"'
         
         wb.save(response)
         return response
-"""апи колонок"""
-class ColumnViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
-                    mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
+    
+class ColumnViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = Column.objects.all()
     serializer_class = ColumnSerializer
     permission_classes = [IsAuthenticated]
@@ -120,16 +113,11 @@ class ColumnViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelM
     
     @action(detail=False, methods=["GET"], url_path="stats")
     def get_stats(self, request, *args, **kwargs):
-        qs = self.get_queryset()
-        stats = qs.aggregate(
-            count = Count("*"),
-        )
+        stats = Column.objects.aggregate(count = Count("*"))
         serializer = self.StatsSerializer(instance=stats)
         return Response(serializer.data)
 
-"""апи задания"""
-class TaskViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
-                  mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
+class TaskViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
@@ -173,14 +161,12 @@ class TaskViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
     
     @action(detail=False, methods=["GET"], url_path="stats")
     def get_stats(self, request, *args, **kwargs):
-        qs = self.get_queryset()
-        stats = qs.aggregate(
+        stats = Task.objects.aggregate(
             count = Count("*"),
         )
         serializer = self.StatsSerializer(instance=stats)
         return Response(serializer.data)
 
-"""апи коммента"""
 class CommentViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
                      mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = Comment.objects.all()
@@ -226,16 +212,13 @@ class CommentViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
     
     @action(detail=False, methods=["GET"], url_path="stats")
     def get_stats(self, request, *args, **kwargs):
-        qs = self.get_queryset()
-        stats = qs.aggregate(
+        stats = Comment.objects.aggregate(
             count = Count("*"),
         )
         serializer = self.StatsSerializer(instance=stats)
         return Response(serializer.data)
 
-"""апи метки времени"""
-class TimeTrackingViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
-                          mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
+class TimeTrackingViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = TimeTracking.objects.all()
     serializer_class = TimeTrackingSerializer
     permission_classes = [IsAuthenticated]
@@ -279,27 +262,20 @@ class TimeTrackingViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.Update
     
     @action(detail=False, methods=["GET"], url_path="stats")
     def get_stats(self, request, *args, **kwargs):
-        qs = self.get_queryset()
-        stats = qs.aggregate(
+        stats = TimeTracking.objects.aggregate(
             count = Count("*"),
         )
         serializer = self.StatsSerializer(instance=stats)
         return Response(serializer.data)
 
-"""апи юзверя"""
 class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
                   mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
-    """
-    вьюсет для работы с профилем пользователя
-    """
+
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        суперюзер видит все профили, обычные пользователи только свой
-        """
         qs = super().get_queryset()
         
         if self.request.user.is_superuser:
@@ -320,9 +296,6 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
 
     @action(url_path="my", methods=["GET"], detail=False)
     def get_my(self, request, *args, **kwargs):
-        """
-        Получить свой профиль
-        """
         profile = UserProfile.objects.get_or_create(user=self.request.user)[0]
         serializer = self.get_serializer(profile)
         return Response(serializer.data)
@@ -365,18 +338,11 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
         if user:
             login(self.request, user)
         else:
-            return Response({
-                "status": "failed"
-            }, status=401
-            )
+            return Response({"status": "failed"}, status=401)
         print(self.request.data)
-        return Response({
-            "status":"success"
-        })
+        return Response({"status":"success"})
     @action(url_path="logout", methods=["POST"], detail=False, permission_classes=[])
     def process_logout(self, *args, **kwargs):
         logout(self.request)
 
-        return Response({
-            "status":"success"
-        })
+        return Response({"status":"success"})

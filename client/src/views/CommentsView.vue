@@ -16,7 +16,7 @@ const removeImageFlag = ref(false);
 const imageViewUrl = ref('');
 const imageViewModal = ref(null);
 const stats = ref(null);
-// комменты
+
 const filters = ref({
   text: '',
   task: ''
@@ -25,9 +25,7 @@ const filters = ref({
 const filteredComments = computed(() => {
   return comments.value.filter(comment => {
     const matchesText = comment.text.toLowerCase().includes(filters.value.text.toLowerCase());
-    
     const matchesTask = !filters.value.task || comment.task === parseInt(filters.value.task);
-    
     return matchesText && matchesTask;
   });
 });
@@ -40,33 +38,20 @@ function resetFilters() {
 }
 
 async function fetchComments() {
-  try {
-    loading.value = true;
-    const r = await axios.get("/api/comments/");
-    comments.value = r.data;
-  } catch (error) {
-    console.error('Ошибка загрузки комментариев:', error);
-  } finally {
-    loading.value = false;
-  }
+  loading.value = true;
+  const r = await axios.get("/api/comments/");
+  comments.value = r.data;
+  loading.value = false;
 }
 
 async function fetchTasks() {
-  try {
-    const r = await axios.get("/api/tasks/");
-    tasks.value = r.data;
-  } catch (error) {
-    console.error('Ошибка загрузки задач:', error);
-  }
+  const r = await axios.get("/api/tasks/");
+  tasks.value = r.data;
 }
 
 async function fetchStats() {
-  try {
-    const r = await axios.get("/api/comments/stats/");
-    stats.value = r.data;
-  } catch (error) {
-    console.error('Ошибка загрузки статистики комментариев:', error);
-  }
+  const r = await axios.get("/api/comments/stats/");
+  stats.value = r.data;
 }
 
 function commentsAddPictureChange() {
@@ -88,22 +73,22 @@ function commentsEditPictureChange() {
 
 function openImageViewModal(imageUrl) {
   imageViewUrl.value = imageUrl;
-  
+
   const modalElement = document.getElementById('imageViewModal');
   if (modalElement) {
     modalElement.style.display = 'block';
     modalElement.classList.add('show');
-    
+
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop fade show';
     backdrop.id = 'imageViewModalBackdrop';
     document.body.appendChild(backdrop);
-    
+
     backdrop.onclick = closeImageViewModal;
-    
+
     const handleEsc = (e) => e.key === 'Escape' && closeImageViewModal();
     document.addEventListener('keydown', handleEsc);
-    
+
     imageViewModal.value = { handleEsc };
   }
 }
@@ -111,48 +96,43 @@ function openImageViewModal(imageUrl) {
 function closeImageViewModal() {
   const modalElement = document.getElementById('imageViewModal');
   const backdrop = document.getElementById('imageViewModalBackdrop');
-  
+
   if (modalElement) {
     modalElement.style.display = 'none';
     modalElement.classList.remove('show');
   }
-  
+
   if (backdrop) backdrop.remove();
   if (imageViewModal.value?.handleEsc) {
     document.removeEventListener('keydown', imageViewModal.value.handleEsc);
   }
-  
+
   imageViewUrl.value = '';
   imageViewModal.value = null;
 }
 
 async function onCommentAdd() {
-  try {
-    const formData = new FormData();
-    
-    if (commentsPictureRef.value.files[0]) {
-      formData.append('picture', commentsPictureRef.value.files[0]);
-    }
-    
-    for (const key in commentToAdd.value) {
-      if (commentToAdd.value[key] !== undefined && commentToAdd.value[key] !== null) {
-        formData.append(key, commentToAdd.value[key]);
-      }
-    }
-    
-    await axios.post("/api/comments/", formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    
-    commentToAdd.value = {};
-    commentAddImageUrl.value = '';
-    if (commentsPictureRef.value) commentsPictureRef.value.value = '';
-    
-    await Promise.all([fetchComments(), fetchStats()]);
-  } catch (error) {
-    console.error('Ошибка добавления комментария:', error);
-    alert('Ошибка при добавлении комментария');
+  const formData = new FormData();
+
+  if (commentsPictureRef.value.files[0]) {
+    formData.append('picture', commentsPictureRef.value.files[0]);
   }
+
+  for (const key in commentToAdd.value) {
+    if (commentToAdd.value[key] !== undefined && commentToAdd.value[key] !== null) {
+      formData.append(key, commentToAdd.value[key]);
+    }
+  }
+
+  await axios.post("/api/comments/", formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+
+  commentToAdd.value = {};
+  commentAddImageUrl.value = '';
+  if (commentsPictureRef.value) commentsPictureRef.value.value = '';
+
+  await Promise.all([fetchComments(), fetchStats()]);
 }
 
 async function onCommentEditClick(comment) {
@@ -160,52 +140,42 @@ async function onCommentEditClick(comment) {
   commentToEditOriginal.value = { ...comment };
   commentEditImageUrl.value = comment.picture || '';
   removeImageFlag.value = false;
-  
+
   if (commentEditPictureRef.value) {
     commentEditPictureRef.value.value = '';
   }
 }
 
 async function onUpdateComment() {
-  try {
-    const formData = new FormData();
-    
-    if (commentEditPictureRef.value.files[0]) {
-      formData.append('picture', commentEditPictureRef.value.files[0]);
-    } else if (removeImageFlag.value && commentToEditOriginal.value?.picture) {
-      formData.append('picture', '');
-    }
-    
-    formData.append('text', commentToEdit.value.text);
-    formData.append('task', commentToEdit.value.task);
-    
-    await axios.patch(`/api/comments/${commentToEdit.value.id}/`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    
-    commentEditImageUrl.value = '';
-    commentToEdit.value = {};
-    commentToEditOriginal.value = null;
-    removeImageFlag.value = false;
-    
-    if (commentEditPictureRef.value) commentEditPictureRef.value.value = '';
-    
-    await Promise.all([fetchComments(), fetchStats()]);
-  } catch (error) {
-    console.error('Ошибка обновления комментария:', error);
-    alert('Ошибка при обновлении комментария');
+  const formData = new FormData();
+
+  if (commentEditPictureRef.value.files[0]) {
+    formData.append('picture', commentEditPictureRef.value.files[0]);
+  } else if (removeImageFlag.value && commentToEditOriginal.value?.picture) {
+    formData.append('picture', '');
   }
+
+  formData.append('text', commentToEdit.value.text);
+  formData.append('task', commentToEdit.value.task);
+
+  await axios.patch(`/api/comments/${commentToEdit.value.id}/`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+
+  commentEditImageUrl.value = '';
+  commentToEdit.value = {};
+  commentToEditOriginal.value = null;
+  removeImageFlag.value = false;
+
+  if (commentEditPictureRef.value) commentEditPictureRef.value.value = '';
+
+  await Promise.all([fetchComments(), fetchStats()]);
 }
 
 async function onRemoveClick(comment) {
   if (confirm('Вы уверены, что хотите удалить комментарий?')) {
-    try {
-      await axios.delete(`/api/comments/${comment.id}/`);
-      await Promise.all([fetchComments(), fetchStats()]);
-    } catch (error) {
-      console.error('Ошибка удаления комментария:', error);
-      alert('Ошибка при удалении комментария');
-    }
+    await axios.delete(`/api/comments/${comment.id}/`);
+    await Promise.all([fetchComments(), fetchStats()]);
   }
 }
 
@@ -239,7 +209,7 @@ onBeforeMount(async () => {
   <div class="container-fluid">
     <div class="p-2">
       <h2>Комментарии</h2>
-      
+
       <form @submit.prevent.stop="onCommentAdd" class="mb-4">
         <div class="row g-2 align-items-end">
           <div class="col-auto">
@@ -252,37 +222,34 @@ onBeforeMount(async () => {
               <label>Задача</label>
             </div>
           </div>
-          
+
           <div class="col-auto">
             <div class="input-group">
-              <input class="form-control" type="file" ref="commentsPictureRef" 
-                     @change="commentsAddPictureChange" accept="image/*">
-              <button v-if="commentAddImageUrl" type="button" 
-                      class="btn btn-outline-secondary" @click="removeAddPicture"
-                      title="Удалить изображение">
+              <input class="form-control" type="file" ref="commentsPictureRef" @change="commentsAddPictureChange"
+                accept="image/*">
+              <button v-if="commentAddImageUrl" type="button" class="btn btn-outline-secondary"
+                @click="removeAddPicture" title="Удалить изображение">
                 <i class="bi bi-x"></i>
               </button>
             </div>
           </div>
-          
+
           <div class="col-auto">
             <div v-if="commentAddImageUrl" class="position-relative">
-              <img :src="commentAddImageUrl" style="max-height: 60px;" 
-                   class="img-thumbnail clickable-image" alt=""
-                   @click="openImageViewModal(commentAddImageUrl)"
-                   title="Нажмите для увеличения">
+              <img :src="commentAddImageUrl" style="max-height: 60px;" class="img-thumbnail clickable-image" alt=""
+                @click="openImageViewModal(commentAddImageUrl)" title="Нажмите для увеличения">
               <div class="image-hint">Нажмите</div>
             </div>
           </div>
-          
+
           <div class="col-auto">
             <div class="form-floating">
-              <textarea class="form-control" v-model="commentToAdd.text" required 
-                        placeholder="Текст комментария" style="height: 60px"></textarea>
+              <textarea class="form-control" v-model="commentToAdd.text" required placeholder="Текст комментария"
+                style="height: 60px"></textarea>
               <label>Текст комментария</label>
             </div>
           </div>
-          
+
           <div class="col-auto">
             <button class="btn btn-primary h-100 w-100">Добавить комментарий</button>
           </div>
@@ -294,23 +261,14 @@ onBeforeMount(async () => {
         <div class="row g-3">
           <div class="col-md-5">
             <div class="form-floating">
-              <input 
-                type="text" 
-                class="form-control" 
-                id="filterText"
-                v-model="filters.text"
-                placeholder="Введите текст"
-              >
+              <input type="text" class="form-control" id="filterText" v-model="filters.text"
+                placeholder="Введите текст">
               <label for="filterText">По тексту комментария</label>
             </div>
           </div>
           <div class="col-md-5">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="filterTask"
-                v-model="filters.task"
-              >
+              <select class="form-select" id="filterTask" v-model="filters.task">
                 <option value="">Все задачи</option>
                 <option :value="task.id" v-for="task in tasks">{{ task.title }}</option>
               </select>
@@ -323,7 +281,7 @@ onBeforeMount(async () => {
             </button>
           </div>
         </div>
-        
+
         <div class="filter-info mt-2 text-muted small">
           Показано: <b>{{ filteredComments.length }}</b> из <b>{{ comments.length }}</b>
         </div>
@@ -338,27 +296,25 @@ onBeforeMount(async () => {
           <span class="visually-hidden">Загрузка...</span>
         </div>
       </div>
-      
+
       <div v-else>
-        <!-- Сообщение если ничего не найдено -->
         <div v-if="filteredComments.length === 0" class="alert alert-info">
           Комментарии не найдены
         </div>
-        
+
         <div v-for="comment in filteredComments" :key="comment.id" class="comment-item card mb-2">
           <div class="card-body">
             <div class="row align-items-center">
 
               <div class="col-auto">
                 <div v-if="comment.picture" class="position-relative">
-                  <img :src="comment.picture" style="max-height: 200px; max-width: 60px;" 
-                       class="img-thumbnail clickable-image" alt="Изображение"
-                       @click="openImageViewModal(comment.picture)"
-                       title="Нажмите для увеличения">
+                  <img :src="comment.picture" style="max-height: 200px; max-width: 60px;"
+                    class="img-thumbnail clickable-image" alt="Изображение" @click="openImageViewModal(comment.picture)"
+                    title="Нажмите для увеличения">
                   <div class="image-hint">Нажмите</div>
                 </div>
               </div>
-              
+
               <div class="col-auto">
                 <strong>Задача {{ comment.task_title }}</strong>
                 <p class="card-text mb-1">{{ comment.text }}</p>
@@ -366,12 +322,10 @@ onBeforeMount(async () => {
                   {{ new Date(comment.created_at).toLocaleString() }}
                 </small>
               </div>
-              
+
               <div class="col-auto text-end">
-                <button type="button" class="btn btn-success btn-sm" 
-                        @click="onCommentEditClick(comment)" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#editCommentModal">
+                <button type="button" class="btn btn-success btn-sm" @click="onCommentEditClick(comment)"
+                  data-bs-toggle="modal" data-bs-target="#editCommentModal">
                   <i class="bi bi-pencil"></i>
                 </button>
                 <button class="btn btn-danger btn-sm ms-1" @click="onRemoveClick(comment)">
@@ -389,8 +343,7 @@ onBeforeMount(async () => {
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">Редактировать комментарий</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                    @click="resetEditModal"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" @click="resetEditModal"></button>
           </div>
           <div class="modal-body">
             <div class="row g-3">
@@ -399,17 +352,15 @@ onBeforeMount(async () => {
                 <div class="text-center mb-3">
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <p class="text-muted mb-0">Текущее изображение:</p>
-                    <button type="button" class="btn btn-outline-danger btn-sm" 
-                            @click="removeExistingImage"
-                            title="Удалить изображение">
+                    <button type="button" class="btn btn-outline-danger btn-sm" @click="removeExistingImage"
+                      title="Удалить изображение">
                       <i class="bi bi-trash"></i> Удалить
                     </button>
                   </div>
                   <div class="position-relative d-inline-block">
-                    <img :src="commentToEdit.picture" style="max-height: 100px;" 
-                         class="img-thumbnail clickable-image" alt="Текущее изображение"
-                         @click="openImageViewModal(commentToEdit.picture)"
-                         title="Нажмите для увеличения">
+                    <img :src="commentToEdit.picture" style="max-height: 100px;" class="img-thumbnail clickable-image"
+                      alt="Текущее изображение" @click="openImageViewModal(commentToEdit.picture)"
+                      title="Нажмите для увеличения">
                     <div class="image-hint">Нажмите</div>
                   </div>
                   <div v-if="removeImageFlag" class="alert alert-warning mt-2 small">
@@ -417,40 +368,38 @@ onBeforeMount(async () => {
                   </div>
                 </div>
               </div>
-              
+
               <div class="col-12">
                 <div class="mb-3">
                   <label class="form-label">Новое изображение</label>
                   <div class="input-group">
-                    <input class="form-control" type="file" ref="commentEditPictureRef" 
-                           @change="commentsEditPictureChange" accept="image/*">
-                    <button v-if="commentEditImageUrl" type="button" 
-                            class="btn btn-outline-secondary" @click="removeEditPicture">
+                    <input class="form-control" type="file" ref="commentEditPictureRef"
+                      @change="commentsEditPictureChange" accept="image/*">
+                    <button v-if="commentEditImageUrl" type="button" class="btn btn-outline-secondary"
+                      @click="removeEditPicture">
                       <i class="bi bi-x"></i>
                     </button>
                   </div>
                 </div>
-                
+
                 <div class="text-center mb-3" v-if="commentEditImageUrl && commentEditPictureRef?.files?.length">
                   <p class="text-muted mb-1">Предпросмотр нового изображения:</p>
                   <div class="position-relative d-inline-block">
-                    <img :src="commentEditImageUrl" style="max-height: 100px;" 
-                         class="img-thumbnail clickable-image" alt="Новое изображение"
-                         @click="openImageViewModal(commentEditImageUrl)"
-                         title="Нажмите для увеличения">
+                    <img :src="commentEditImageUrl" style="max-height: 100px;" class="img-thumbnail clickable-image"
+                      alt="Новое изображение" @click="openImageViewModal(commentEditImageUrl)"
+                      title="Нажмите для увеличения">
                     <div class="image-hint">Нажмите</div>
                   </div>
                 </div>
               </div>
-              
+
               <div class="col-12">
                 <div class="form-floating">
-                  <textarea class="form-control" v-model="commentToEdit.text" 
-                            style="height: 100px" required></textarea>
+                  <textarea class="form-control" v-model="commentToEdit.text" style="height: 100px" required></textarea>
                   <label>Текст комментария</label>
                 </div>
               </div>
-              
+
               <div class="col-12">
                 <div class="form-floating">
                   <select class="form-select" v-model="commentToEdit.task" required>
@@ -464,12 +413,10 @@ onBeforeMount(async () => {
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
-                    @click="resetEditModal">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="resetEditModal">
               Закрыть
             </button>
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" 
-                    @click="onUpdateComment">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" @click="onUpdateComment">
               Сохранить
             </button>
           </div>
@@ -485,14 +432,8 @@ onBeforeMount(async () => {
             <button type="button" class="btn-close" @click="closeImageViewModal"></button>
           </div>
           <div class="modal-body text-center">
-            <img :src="imageViewUrl" class="img-fluid" 
-                 style="max-height: 70vh; object-fit: contain;"
-                 v-if="imageViewUrl">
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="closeImageViewModal">
-              Закрыть
-            </button>
+            <img :src="imageViewUrl" class="img-fluid" style="max-height: 70vh; object-fit: contain;"
+              v-if="imageViewUrl">
           </div>
         </div>
       </div>
@@ -506,7 +447,7 @@ onBeforeMount(async () => {
   background-color: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #dee2e6;
-  
+
   h5 {
     margin-bottom: 1rem;
     color: #495057;
@@ -521,9 +462,11 @@ onBeforeMount(async () => {
 .comment-item {
   transition: box-shadow 0.2s;
 }
+
 .comment-item:hover {
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
+
 .img-thumbnail {
   border: 1px solid #dee2e6;
   padding: 2px;
