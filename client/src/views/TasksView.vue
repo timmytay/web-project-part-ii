@@ -241,14 +241,14 @@ onBeforeMount(async () => {
       <form @submit.prevent.stop="onTaskAdd" class="mb-4">
         <div class="row g-2 align-items-end">
 
-          <div class="col-md-2">
+          <div class="col-md-3">
             <div class="form-floating">
               <input type="text" class="form-control" v-model="taskToAdd.title" required>
               <label>Название задачи</label>
             </div>
           </div>
 
-          <div class="col-md-2">
+          <div class="col-md-3">
             <div class="form-floating">
               <select class="form-select" v-model="taskToAdd.column" required>
                 <option :value="col.id" v-for="col in columns">{{ col.name }}</option>
@@ -287,7 +287,7 @@ onBeforeMount(async () => {
             </div>
           </div>
 
-          <div class="col-md-2">
+          <div class="col-12">
             <div class="input-group">
               <input class="form-control" type="file" ref="taskAddPictureRef" @change="taskAddPictureChange"
                 accept="image/*">

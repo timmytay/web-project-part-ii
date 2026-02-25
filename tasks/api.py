@@ -291,14 +291,8 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
         if self.request.user.is_superuser and 'pk' in self.kwargs:
             return super().get_object()
         
-        profile= UserProfile.objects.get_or_create(user=self.request.user)
+        profile, created= UserProfile.objects.get_or_create(user=self.request.user)
         return profile
-
-    @action(url_path="my", methods=["GET"], detail=False)
-    def get_my(self, request, *args, **kwargs):
-        profile = UserProfile.objects.get_or_create(user=self.request.user)[0]
-        serializer = self.get_serializer(profile)
-        return Response(serializer.data)
 
     @action(url_path="me", methods=["GET"], detail=False, permission_classes=[])
     def get_me(self, request, *args, **kwargs):

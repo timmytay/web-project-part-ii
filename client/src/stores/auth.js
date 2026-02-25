@@ -1,31 +1,22 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue';
+import { ref, onBeforeMount } from 'vue';
 import axios from 'axios';
 import Cookies from 'js-cookie'
 
 export const useAuthStore = defineStore("auth", () => {
     const userInfo = ref({});
     const username = ref();
-    const is_authenticated = ref(false);
-    const isLoading = ref(true);
+    const is_authenticated = ref(null);
+    const is_staff = ref(null);
 
     async function fetchUserInfo() {
-        try {
-            isLoading.value = true;
-            const r = await axios.get("/api/users/me/");
-            userInfo.value = r.data;
-            axios.defaults.headers.common['X-CSRFToken'] = Cookies.get("csrftoken");
-            username.value = r.data.username;
-            is_authenticated.value = r.data.is_authenticated;
-            return true;
-        } catch (error) {
-            userInfo.value = null;
-            is_authenticated.value = false;
-            return false;
-        }
-        finally {
-            isLoading.value = false;
-        }
+        const r = await axios.get("/api/users/me/");
+        userInfo.value = r.data;
+        axios.defaults.headers.common['X-CSRFToken'] = Cookies.get("csrftoken");
+        username.value = r.data.username;
+        is_authenticated.value = r.data.is_authenticated;
+        is_staff.value = r.data.is_staff;
+        return true;
     }
 
     async function login(credentials) {
@@ -40,20 +31,21 @@ export const useAuthStore = defineStore("auth", () => {
     }
 
     async function logout() {
-        try {
-            await axios.post("/api/users/logout/");
-        } finally {
-            userInfo.value = {};
-            username.value = null;
-            is_authenticated.value = false;
-        }
+        await axios.post("/api/users/logout/");
+        userInfo.value = {};
+        username.value = null;
+        is_authenticated.value = false;
+        is_staff.value = false;
     }
+    onBeforeMount(async () => {
+        await fetchUserInfo();
+    })
 
     return {
         userInfo,
         username,
         is_authenticated,
-        isLoading,
+        is_staff,
         fetchUserInfo,
         login,
         logout

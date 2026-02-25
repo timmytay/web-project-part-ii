@@ -14,6 +14,7 @@ const filters = ref({
   name: '',
   project: ''
 });
+
 const projectsByID = computed(() => {
   return _.keyBy(projects.value, x => x.id)
 })
@@ -90,7 +91,7 @@ onBeforeMount(async () => {
 
       <form @submit.prevent.stop="onColumnAdd" class="mb-4">
         <div class="row">
-          <div class="col">
+          <div class="col-auto">
             <div class="form-floating">
               <input type="text" class="form-control" id="addColumnName" v-model="ColumnToAdd.name" required>
               <label for="addColumnName">Название</label>

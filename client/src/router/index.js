@@ -22,7 +22,7 @@ const router = createRouter({
       name: "ProjectsView",
       component: ProjectsView
     },
-    
+
     {
       path: "/login",
       name: "LoginView",
@@ -30,7 +30,7 @@ const router = createRouter({
     },
     {
       path: "/tasks",
-      name: "TasksView", 
+      name: "TasksView",
       component: TasksView
     },
     {
@@ -54,16 +54,14 @@ const router = createRouter({
 
 router.beforeEach(async (to, from) => {
   const authStore = useAuthStore();
-  
-  if (!authStore.userInfo || Object.keys(authStore.userInfo).length === 0) {
-    await authStore.fetchUserInfo();
-  }
-  
-  if (!authStore.is_authenticated && to.name !== 'LoginView') {
+
+  await authStore.fetchUserInfo();
+
+  if (authStore.is_authenticated == false && to.name !== 'LoginView') {
     return { name: 'LoginView' };
   }
-  
-  if (authStore.is_authenticated && to.name == 'LoginView') {
+
+  if (authStore.is_authenticated == true && to.name == 'LoginView') {
     return { name: 'ProjectsView' };
   }
 })

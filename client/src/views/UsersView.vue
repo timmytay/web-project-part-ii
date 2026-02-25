@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed, onBeforeMount } from 'vue';
 import axios from 'axios';
-
+import {useAuthStore} from '@/stores/auth';
+import { storeToRefs } from 'pinia'; 
 const loading = ref(false);
 const users = ref([]);
 const userToAdd = ref({});
@@ -9,6 +10,9 @@ const userToEdit = ref({});
 const error = ref(null);
 const successMessage = ref('');
 const stats = ref(null);
+
+const authStore = useAuthStore();
+const { is_staff } = storeToRefs(authStore);
 
 const filters = ref({
   username: '',
@@ -95,20 +99,20 @@ async function onUpdateUser() {
 
 async function onUserAdd() {
   error.value = null;
+  
   const userData = {
     username: userToAdd.value.username,
+    email: userToAdd.value.email,
     password: userToAdd.value.password,
-    email: userToAdd.value.email || '',
-    name: userToAdd.value.name,
-    birthday: userToAdd.value.birthday,
+    name: userToAdd.value.name || '',
+    birthday: userToAdd.value.birthday || null,
     type: userToAdd.value.type
   };
-
-  await api.post("/users/", userData);
-  successMessage.value = 'Пользователь успешно создан';
-  await Promise.all([fetchUsers(), fetchStats()]);
-
-  userToAdd.value = {};
+    await api.post("/users/", userData);
+    successMessage.value = 'Пользователь успешно создан';
+    await Promise.all([fetchUsers(), fetchStats()]);
+    userToAdd.value = {};
+  
 }
 
 async function onRemoveUser(user) {
@@ -152,7 +156,7 @@ onBeforeMount(async () => {
         <button type="button" class="btn-close" @click="successMessage = ''"></button>
       </div>
 
-      <form @submit.prevent.stop="onUserAdd">
+      <form v-if="is_staff" @submit.prevent.stop="onUserAdd">
         <div class="row g-2 mb-3">
           <div class="col-md-3">
             <div class="form-floating">
@@ -170,8 +174,8 @@ onBeforeMount(async () => {
           </div>
           <div class="col-md-3">
             <div class="form-floating">
-              <input type="email" class="form-control" id="addUserEmail" v-model="userToAdd.email" placeholder="Email">
-              <label for="addUserEmail">Email</label>
+              <input type="email" class="form-control" id="addUserEmail" v-model="userToAdd.email" required>
+              <label for="addUserEmail">Email *</label>
             </div>
           </div>
           <div class="col-md-3">
@@ -192,14 +196,14 @@ onBeforeMount(async () => {
               <label for="addProfileName">Полное имя</label>
             </div>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-4">
             <div class="form-floating">
               <input type="date" class="form-control" id="addUserBirthday" v-model="userToAdd.birthday"
                 placeholder="Дата рождения">
               <label for="addUserBirthday">Дата рождения</label>
             </div>
           </div>
-          <div class="col-md-2">
+          <div class="col-md-4">
             <button class="btn btn-primary h-100 w-100">Добавить</button>
           </div>
         </div>
@@ -212,24 +216,24 @@ onBeforeMount(async () => {
             <div class="form-floating">
               <input type="text" class="form-control" id="filterUsername" v-model="filters.username"
                 placeholder="Введите имя пользователя">
-              <label for="filterUsername">По имени пользователя</label>
+              <label for="filterUsername">Никнейм</label>
             </div>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-2">
             <div class="form-floating">
               <input type="text" class="form-control" id="filterName" v-model="filters.name"
                 placeholder="Введите полное имя">
-              <label for="filterName">По полному имени</label>
+              <label for="filterName">Имя</label>
             </div>
           </div>
           <div class="col-md-3">
             <div class="form-floating">
               <input type="text" class="form-control" id="filterEmail" v-model="filters.email"
                 placeholder="Введите email">
-              <label for="filterEmail">По email</label>
+              <label for="filterEmail">Email</label>
             </div>
           </div>
-          <div class="col-md-2">
+          <div class="col-md-3">
             <div class="form-floating">
               <select class="form-select" id="filterType" v-model="filters.type">
                 <option value="">Все типы</option>
@@ -295,7 +299,7 @@ onBeforeMount(async () => {
                     data-bs-target="#editUserModal">
                     <i class="bi bi-pencil"></i>
                   </button>
-                  <button class="btn btn-danger btn-sm ms-1" @click="onRemoveUser(user)">
+                  <button v-if="is_staff" class="btn btn-danger btn-sm ms-1" @click="onRemoveUser(user)">
                     <i class="bi bi-trash"></i>
                   </button>
                 </td>

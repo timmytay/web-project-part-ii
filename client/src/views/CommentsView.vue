@@ -212,7 +212,7 @@ onBeforeMount(async () => {
 
       <form @submit.prevent.stop="onCommentAdd" class="mb-4">
         <div class="row g-2 align-items-end">
-          <div class="col-auto">
+          <div class="col-12">
             <div class="form-floating">
               <select class="form-select" v-model="commentToAdd.task" required>
                 <option :value="task.id" v-for="task in tasks" :key="task.id">
@@ -223,7 +223,7 @@ onBeforeMount(async () => {
             </div>
           </div>
 
-          <div class="col-auto">
+          <div class="col-12">
             <div class="input-group">
               <input class="form-control" type="file" ref="commentsPictureRef" @change="commentsAddPictureChange"
                 accept="image/*">
@@ -234,7 +234,7 @@ onBeforeMount(async () => {
             </div>
           </div>
 
-          <div class="col-auto">
+          <div class="col-12">
             <div v-if="commentAddImageUrl" class="position-relative">
               <img :src="commentAddImageUrl" style="max-height: 60px;" class="img-thumbnail clickable-image" alt=""
                 @click="openImageViewModal(commentAddImageUrl)" title="Нажмите для увеличения">
@@ -242,7 +242,7 @@ onBeforeMount(async () => {
             </div>
           </div>
 
-          <div class="col-auto">
+          <div class="col-12">
             <div class="form-floating">
               <textarea class="form-control" v-model="commentToAdd.text" required placeholder="Текст комментария"
                 style="height: 60px"></textarea>
@@ -250,7 +250,7 @@ onBeforeMount(async () => {
             </div>
           </div>
 
-          <div class="col-auto">
+          <div class="col-12">
             <button class="btn btn-primary h-100 w-100">Добавить комментарий</button>
           </div>
         </div>

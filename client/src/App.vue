@@ -4,26 +4,24 @@ import axios from 'axios';
 import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth';
 import { storeToRefs } from 'pinia';
+
+
 const router = useRouter()
+
 const userInfoStore = useAuthStore();
-const { is_authenticated } = storeToRefs(userInfoStore)
+const { is_authenticated, username, is_staff } = storeToRefs(userInfoStore)
 
 async function onLogout() {
   const r = await axios.post("/api/users/logout/")
   userInfoStore.fetchUserInfo();
-
-  router.go()
+  router.go();
 }
-
-onBeforeMount(async () => {
-  await userInfoStore.fetchUserInfo();
-})
 </script>
 
 <template>
   <div class="container">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="/">управление задачами</a>
+      <a class="navbar-brand" href="/">менеджер проектов</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
         aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -45,13 +43,18 @@ onBeforeMount(async () => {
           <li class="nav-item">
             <router-link class="nav-link" to="/time-tracking">Учет времени</router-link>
           </li>
-          <li class="nav-item">
+          <li v-if="is_staff" class="nav-item">
             <router-link class="nav-link" to="/users">Пользователи</router-link>
           </li>
         </ul>
-        <button @click="onLogout" v-if="is_authenticated" class="btn btn-outline-danger btn-sm">
-          <i class="bi bi-box-arrow-right me-1"></i> Выйти
-        </button>
+        <div class="d-flex align-items-center gap-2">
+          <router-link v-if="is_authenticated" to="/users" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-person-circle me-1"></i>{{ username }}
+            <span v-if="is_staff">(админ)</span>
+          </router-link>
+          <button v-if="is_authenticated" @click="onLogout" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-box-arrow-right"></i>Выйти</button>
+        </div>
       </div>
     </nav>
   </div>
