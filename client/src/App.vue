@@ -43,6 +43,9 @@ async function onLogout() {
           <li class="nav-item">
             <router-link class="nav-link" to="/time-tracking">Учет времени</router-link>
           </li>
+          <li class="nav-item">
+            <router-link class="nav-link" to="/second-auth">2</router-link>
+          </li>
           <li v-if="is_staff" class="nav-item">
             <router-link class="nav-link" to="/users">Пользователи</router-link>
           </li>

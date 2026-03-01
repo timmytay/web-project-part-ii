@@ -105,14 +105,25 @@ onBeforeMount(async () => {
         <div class="row g-2">
           <div class="col-md-4">
             <div class="form-floating">
-              <input type="text" class="form-control" v-model="projectToAdd.name" required>
-              <label>Название проекта</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="addProjectName"
+                v-model="projectToAdd.name" 
+                required
+              >
+              <label for="addProjectName">Название проекта</label>
             </div>
           </div>
           <div class="col-md-6">
             <div class="form-floating">
-              <input type="text" class="form-control" v-model="projectToAdd.description">
-              <label>Описание</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="addProjectDescription"
+                v-model="projectToAdd.description"
+              >
+              <label for="addProjectDescription">Описание</label>
             </div>
           </div>
           <div class="col-md-2">
@@ -126,8 +137,13 @@ onBeforeMount(async () => {
         <div class="row g-3">
           <div class="col-md-10">
             <div class="form-floating">
-              <input type="text" class="form-control" id="filterName" v-model="filters.name"
-                placeholder="Введите название">
+              <input 
+                type="text" 
+                class="form-control" 
+                id="filterName" 
+                v-model="filters.name"
+                placeholder="Введите название"
+              >
               <label for="filterName">По названию проекта</label>
             </div>
           </div>
@@ -192,12 +208,23 @@ onBeforeMount(async () => {
           </div>
           <div class="modal-body">
             <div class="form-floating mb-3">
-              <input type="text" class="form-control" v-model="projectToEdit.name" required>
-              <label>Название проекта</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="editProjectName"
+                v-model="projectToEdit.name" 
+                required
+              >
+              <label for="editProjectName">Название проекта</label>
             </div>
             <div class="form-floating">
-              <textarea class="form-control" v-model="projectToEdit.description" style="height: 100px"></textarea>
-              <label>Описание</label>
+              <textarea 
+                class="form-control" 
+                id="editProjectDescription"
+                v-model="projectToEdit.description" 
+                style="height: 100px"
+              ></textarea>
+              <label for="editProjectDescription">Описание</label>
             </div>
           </div>
           <div class="modal-footer">

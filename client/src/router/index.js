@@ -8,6 +8,7 @@ import CommentsView from '@/views/CommentsView.vue'
 import TimeTrackingView from '@/views/TimeTrackingView.vue'
 import UsersView from '@/views/UsersView.vue'
 import LoginView from '@/views/LoginView.vue'
+import SecondAuth from '@/views/SecondAuth.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,10 +45,13 @@ const router = createRouter({
       component: TimeTrackingView
     },
     {
+      path: "/second-auth",
+      component: SecondAuth
+    },
+    {
       path: "/users",
       name: "UsersView",
       component: UsersView,
-      props: route => ({ role: route.query.role || "" }),
     },
   ],
 })

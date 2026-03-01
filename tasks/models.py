@@ -117,7 +117,11 @@ class UserProfile(TimestampModel):
     class Meta:
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"
-
+        permissions = [
+            ("can_create", "Имеет право создавать"),
+            ("can_see_page", "Может смотреть на страницу")
+        ]
+        
     def str(self) -> str: 
         return f"{self.name} ({self.get_role_display()})"
 

@@ -107,22 +107,41 @@ onBeforeMount(async () => {
         <div class="row g-2">
           <div class="col-md-4">
             <div class="form-floating">
-              <select class="form-select" v-model="timeToAdd.task" required>
-                <option :value="task.id" v-for="task in tasks">{{ task.title }}</option>
+              <select 
+                id="addTask" 
+                class="form-select" 
+                v-model="timeToAdd.task" 
+                required
+              >
+                <option value="">Выберите задачу</option>
+                <option :value="task.id" v-for="task in tasks" :key="task.id">
+                  {{ task.title }}
+                </option>
               </select>
-              <label>Задача</label>
+              <label for="addTask">Задача</label>
             </div>
           </div>
           <div class="col-md-3">
             <div class="form-floating">
-              <input type="datetime-local" class="form-control" v-model="timeToAdd.start_time" required>
-              <label>Начало</label>
+              <input 
+                type="datetime-local" 
+                id="addStartTime"
+                class="form-control" 
+                v-model="timeToAdd.start_time" 
+                required
+              >
+              <label for="addStartTime">Начало</label>
             </div>
           </div>
           <div class="col-md-3">
             <div class="form-floating">
-              <input type="datetime-local" class="form-control" v-model="timeToAdd.end_time">
-              <label>Окончание</label>
+              <input 
+                type="datetime-local" 
+                id="addEndTime"
+                class="form-control" 
+                v-model="timeToAdd.end_time"
+              >
+              <label for="addEndTime">Окончание</label>
             </div>
           </div>
           <div class="col-md-2">
@@ -132,8 +151,14 @@ onBeforeMount(async () => {
         <div class="row mt-2">
           <div class="col-12">
             <div class="form-floating">
-              <input type="text" class="form-control" v-model="timeToAdd.description" placeholder="Описание работы">
-              <label>Описание работы</label>
+              <input 
+                type="text" 
+                id="addDescription"
+                class="form-control" 
+                v-model="timeToAdd.description" 
+                placeholder="Описание работы"
+              >
+              <label for="addDescription">Описание работы</label>
             </div>
           </div>
         </div>
@@ -144,34 +169,59 @@ onBeforeMount(async () => {
         <div class="row g-3">
           <div class="col-md-3">
             <div class="form-floating">
-              <select class="form-select" id="filterTask" v-model="filters.task">
+              <select 
+                class="form-select" 
+                id="filterTask" 
+                v-model="filters.task"
+              >
                 <option value="">Все задачи</option>
-                <option :value="task.id" v-for="task in tasks">{{ task.title }}</option>
+                <option :value="task.id" v-for="task in tasks" :key="task.id">
+                  {{ task.title }}
+                </option>
               </select>
               <label for="filterTask">По задаче</label>
             </div>
           </div>
           <div class="col-md-3">
             <div class="form-floating">
-              <input type="text" class="form-control" id="filterDescription" v-model="filters.description"
-                placeholder="Введите описание">
+              <input 
+                type="text" 
+                class="form-control" 
+                id="filterDescription" 
+                v-model="filters.description"
+                placeholder="Введите описание"
+              >
               <label for="filterDescription">По описанию</label>
             </div>
           </div>
           <div class="col-md-2">
             <div class="form-floating">
-              <input type="date" class="form-control" id="filterDateFrom" v-model="filters.dateFrom">
+              <input 
+                type="date" 
+                class="form-control" 
+                id="filterDateFrom" 
+                v-model="filters.dateFrom"
+              >
               <label for="filterDateFrom">Дата с</label>
             </div>
           </div>
           <div class="col-md-2">
             <div class="form-floating">
-              <input type="date" class="form-control" id="filterDateTo" v-model="filters.dateTo">
+              <input 
+                type="date" 
+                class="form-control" 
+                id="filterDateTo" 
+                v-model="filters.dateTo"
+              >
               <label for="filterDateTo">Дата по</label>
             </div>
           </div>
           <div class="col-md-2 d-flex align-items-center">
-            <button class="btn btn-outline-secondary w-100" @click="resetFilters">
+            <button 
+              type="button"
+              class="btn btn-outline-secondary w-100" 
+              @click="resetFilters"
+            >
               <i class="bi bi-x-circle"></i> Сбросить
             </button>
           </div>
@@ -219,12 +269,22 @@ onBeforeMount(async () => {
                 <p class="card-text mb-1 small">{{ time.description || 'Нет описания' }}</p>
               </div>
               <div class="col-md-2 text-end">
-                <button type="button" class="btn btn-success btn-sm" @click="onTimeEditClick(time)"
-                  data-bs-toggle="modal" data-bs-target="#editTimeModal">
-                  <i class="bi bi-pencil"></i>
+                <button 
+                  type="button" 
+                  class="btn btn-success btn-sm" 
+                  @click="onTimeEditClick(time)"
+                  data-bs-toggle="modal" 
+                  data-bs-target="#editTimeModal"
+                  :aria-label="'Редактировать запись для задачи ' + time.task_title"
+                >
+                  <i class="bi bi-pencil" aria-hidden="true"></i>
                 </button>
-                <button class="btn btn-danger btn-sm ms-1" @click="onRemoveClick(time)">
-                  <i class="bi bi-trash"></i>
+                <button 
+                  class="btn btn-danger btn-sm ms-1" 
+                  @click="onRemoveClick(time)"
+                  :aria-label="'Удалить запись для задачи ' + time.task_title"
+                >
+                  <i class="bi bi-trash" aria-hidden="true"></i>
                 </button>
               </div>
             </div>
@@ -233,39 +293,61 @@ onBeforeMount(async () => {
       </div>
     </div>
 
-    <div class="modal fade" id="editTimeModal" tabindex="-1">
+    <div class="modal fade" id="editTimeModal" tabindex="-1" aria-labelledby="editModalTitle" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Редактировать учет времени</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <h5 class="modal-title" id="editModalTitle">Редактировать учет времени</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
           </div>
           <div class="modal-body">
             <div class="row g-3">
               <div class="col-12">
                 <div class="form-floating">
-                  <input type="datetime-local" class="form-control" v-model="timeToEdit.start_time" required>
-                  <label>Начало</label>
+                  <input 
+                    type="datetime-local" 
+                    id="editStartTime"
+                    class="form-control" 
+                    v-model="timeToEdit.start_time" 
+                    required
+                  >
+                  <label for="editStartTime">Начало</label>
                 </div>
               </div>
               <div class="col-12">
                 <div class="form-floating">
-                  <input type="datetime-local" class="form-control" v-model="timeToEdit.end_time">
-                  <label>Окончание</label>
+                  <input 
+                    type="datetime-local" 
+                    id="editEndTime"
+                    class="form-control" 
+                    v-model="timeToEdit.end_time"
+                  >
+                  <label for="editEndTime">Окончание</label>
                 </div>
               </div>
               <div class="col-12">
                 <div class="form-floating">
-                  <textarea class="form-control" v-model="timeToEdit.description" style="height: 100px"></textarea>
-                  <label>Описание работы</label>
+                  <textarea 
+                    id="editDescription"
+                    class="form-control" 
+                    v-model="timeToEdit.description" 
+                    style="height: 100px"
+                  ></textarea>
+                  <label for="editDescription">Описание работы</label>
                 </div>
               </div>
             </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal"
-              @click="onUpdateTime">Сохранить</button>
+            <button 
+              type="button" 
+              class="btn btn-primary" 
+              data-bs-dismiss="modal"
+              @click="onUpdateTime"
+            >
+              Сохранить
+            </button>
           </div>
         </div>
       </div>

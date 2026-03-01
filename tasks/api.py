@@ -1,9 +1,11 @@
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import mixins, serializers
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import serializers
+from rest_framework.exceptions import PermissionDenied
+from tasks.permissions import CanCreatePermission, SecondFactorPermission
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse
 import openpyxl
@@ -20,6 +22,14 @@ class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'create', 'destroy']:
+            permission_classes = [IsAuthenticated, CanCreatePermission]
+        else:
+            permission_classes = [IsAuthenticated]
+        
+        return [permission() for permission in permission_classes]
+
     def get_queryset(self):
         qs = super().get_queryset()
         
@@ -31,6 +41,7 @@ class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
             qs = qs.filter(user=self.request.user)
         
         return qs
+
 
     def perform_create(self, serializer):
         if self.request.user.is_superuser:
@@ -76,6 +87,8 @@ class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
         
         wb.save(response)
         return response
+    
+    
     
 class ColumnViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = Column.objects.all()
@@ -296,11 +309,21 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
 
     @action(url_path="me", methods=["GET"], detail=False, permission_classes=[])
     def get_me(self, request, *args, **kwargs):
-        return Response({
+        permissions = self.request.user.get_all_permissions();
+        data = {
             'username': self.request.user.username,
             'is_authenticated': self.request.user.is_authenticated,
             'is_staff': self.request.user.is_staff,
-        })
+            'permissions': permissions,
+            'can_create': self.request.user.has_perm('tasks.can_create'),
+        }
+
+        if self.request.user.is_authenticated:
+            data.update({
+                'second': self.request.session.get('second') or False,
+            })
+        
+        return Response(data)
 
     class StatsSerializer(serializers.Serializer):
         count = serializers.IntegerField()
@@ -333,10 +356,26 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
             login(self.request, user)
         else:
             return Response({"status": "failed"}, status=401)
-        print(self.request.data)
+        
         return Response({"status":"success"})
+    
     @action(url_path="logout", methods=["POST"], detail=False, permission_classes=[])
     def process_logout(self, *args, **kwargs):
         logout(self.request)
 
         return Response({"status":"success"})
+    
+    @action(url_path="second-login", methods=["POST"], detail=False, permission_classes=[])
+    def second_login(self, *args, **kwargs):
+        
+        key = self.request.data.get('key')
+        if key == '123':
+            self.request.session['second'] = True;
+
+        return Response({"status":"success"})
+    
+
+    @action(url_path="do-smth", methods=["POST"], detail=False, permission_classes=[SecondFactorPermission])
+    def do_smth(self, *args, **kwargs):
+        return Response({"success":True})
+
