@@ -66,7 +66,7 @@ class Command(BaseCommand):
                 UserProfile.objects.create(
                     user=user,
                     name=f"{user.first_name} {user.last_name}",
-                    birthday=fake.date_of_birth(minimum_age=20, maximum_age=60),
+                    birthday=fake.date_of_birth(minimum_age=18, maximum_age=60),
                     type=random.choice(profile_types)
                 )
         

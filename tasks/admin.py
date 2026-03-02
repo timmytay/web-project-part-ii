@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Project, Column, Task, Comment, TimeTracking
+from .models import Project, Column, Task, Comment, TimeTracking, UserProfile
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
@@ -33,3 +33,11 @@ class TimeTrackingAdmin(admin.ModelAdmin):
     list_filter = ['start_time']
     search_fields = ['description']
     date_hierarchy = 'start_time'
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'totp_key', 'name', 'birthday', 'type']
+    list_filter = ['type', 'created_at']
+    search_fields = ['user__username', 'name']
+    raw_id_fields = ['user']
+    readonly_fields = ['totp_key']

@@ -110,20 +110,17 @@ class UserProfile(TimestampModel):
         VIEWER = 'viewer', 'Наблюдатель'
     
     name = models.TextField(null=True, blank=True)
-    birthday = models.DateField(null=True)
+    birthday = models.DateField(null=True, blank=True)
     user = models.OneToOneField("auth.User", on_delete=models.CASCADE)
     type = models.TextField(choices=Type, null=True)
+
+    totp_key = models.CharField(max_length=128, null=True)
         
     class Meta:
-        verbose_name = "Пользователь"
-        verbose_name_plural = "Пользователи"
         permissions = [
             ("can_create", "Имеет право создавать"),
             ("can_see_page", "Может смотреть на страницу")
         ]
-        
-    def str(self) -> str: 
-        return f"{self.name} ({self.get_role_display()})"
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
