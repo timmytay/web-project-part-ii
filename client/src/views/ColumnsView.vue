@@ -91,13 +91,13 @@ onBeforeMount(async () => {
 
       <form @submit.prevent.stop="onColumnAdd" class="mb-4">
         <div class="row">
-          <div class="col-auto">
+          <div class="col-12">
             <div class="form-floating">
               <input type="text" class="form-control" id="addColumnName" v-model="ColumnToAdd.name" required>
               <label for="addColumnName">Название</label>
             </div>
           </div>
-          <div class="col-auto">
+          <div class="col-12">
             <div class="form-floating">
               <select class="form-select" id="addColumnProject" v-model="ColumnToAdd.project" required>
                 <option :value="p.id" v-for="p in projects">{{ p.name }}</option>
@@ -105,7 +105,7 @@ onBeforeMount(async () => {
               <label for="addColumnProject">Проект</label>
             </div>
           </div>
-          <div class="col-auto">
+          <div class="col-12">
             <button class="btn btn-primary">Добавить</button>
           </div>
         </div>

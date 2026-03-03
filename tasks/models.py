@@ -3,6 +3,7 @@ from django.conf import settings
 from django.dispatch import receiver 
 from django.db.models.signals import post_save
 from django.contrib.auth.models import User
+import pyotp
 
 class Project(models.Model):
     name = models.CharField("Название", max_length=255)
@@ -114,13 +115,14 @@ class UserProfile(TimestampModel):
     user = models.OneToOneField("auth.User", on_delete=models.CASCADE)
     type = models.TextField(choices=Type, null=True)
 
-    totp_key = models.CharField(max_length=128, null=True)
+    totp_key = models.CharField(max_length=128, null=True, default=pyotp.random_base32)
         
     class Meta:
         permissions = [
             ("can_create", "Имеет право создавать"),
             ("can_see_page", "Может смотреть на страницу")
         ]
+
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):

@@ -7,7 +7,8 @@ export const useAuthStore = defineStore("auth", () => {
     const username = ref();
     const is_authenticated = ref(null);
     const is_staff = ref(null);
-    const permissions = ref([]);
+    const second = ref(null);
+    const second_expire = ref(null);
 
     async function fetchUserInfo() {
         const r = await axios.get("/api/users/me/");
@@ -15,10 +16,10 @@ export const useAuthStore = defineStore("auth", () => {
         username.value = r.data.username;
         is_authenticated.value = r.data.is_authenticated;
         is_staff.value = r.data.is_staff;
-        permissions.value= r.data.permissions;
-
+        second.value = r.data.second;
+        second_expire.value = r.data.second_expire;
         axios.defaults.headers.common['X-CSRFToken'] = Cookies.get("csrftoken");
-        return true;
+        return true
     }
 
     async function login(credentials) {
@@ -37,21 +38,19 @@ export const useAuthStore = defineStore("auth", () => {
         username.value = null;
         is_authenticated.value = false;
         is_staff.value = false;
+        second.value = false;
+        second_expire.value = null;
     }
     onBeforeMount(async () => {
         await fetchUserInfo();
     })
 
-    function hasPermission(name){
-        return permissions.value.includes(name);
-    }
-
     return {
         username,
         is_authenticated,
         is_staff,
-        hasPermission,
-
+        second,
+        second_expire,
 
         fetchUserInfo,
         login,

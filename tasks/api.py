@@ -1,3 +1,4 @@
+from django.forms import ValidationError
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import mixins, serializers
 from rest_framework.permissions import IsAuthenticated, BasePermission
@@ -5,11 +6,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
-from tasks.permissions import CanCreatePermission, SecondFactorPermission
+from tasks.permissions import SecondFactorPermission
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse
 import openpyxl
 from django.db.models import Count
+from django.utils import timezone
+from datetime import timedelta
 
 from .models import *
 from .serializers import (
@@ -24,7 +27,7 @@ class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
 
     def get_permissions(self):
         if self.action in ['update', 'partial_update', 'create', 'destroy']:
-            permission_classes = [IsAuthenticated, CanCreatePermission]
+            permission_classes = [IsAuthenticated, SecondFactorPermission]
         else:
             permission_classes = [IsAuthenticated]
         
@@ -88,12 +91,16 @@ class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
         wb.save(response)
         return response
     
-    
-    
 class ColumnViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = Column.objects.all()
     serializer_class = ColumnSerializer
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'create', 'destroy']:
+            permission_classes = [IsAuthenticated, SecondFactorPermission]
+        else:
+            permission_classes = []
+        
+        return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -133,7 +140,13 @@ class ColumnViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelM
 class TaskViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'create', 'destroy']:
+            permission_classes = [IsAuthenticated, SecondFactorPermission]
+        else:
+            permission_classes = []
+        
+        return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -184,7 +197,13 @@ class CommentViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
                      mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'create', 'destroy']:
+            permission_classes = [IsAuthenticated, SecondFactorPermission]
+        else:
+            permission_classes = []
+        
+        return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -234,7 +253,13 @@ class CommentViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
 class TimeTrackingViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = TimeTracking.objects.all()
     serializer_class = TimeTrackingSerializer
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'create', 'destroy']:
+            permission_classes = [IsAuthenticated, SecondFactorPermission]
+        else:
+            permission_classes = []
+        
+        return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -286,7 +311,13 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
 
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'create', 'destroy']:
+            permission_classes = [IsAuthenticated, SecondFactorPermission]
+        else:
+            permission_classes = []
+        
+        return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -304,25 +335,36 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
         if self.request.user.is_superuser and 'pk' in self.kwargs:
             return super().get_object()
         
-        profile, created= UserProfile.objects.get_or_create(user=self.request.user)
+        profile, created = UserProfile.objects.get_or_create(user=self.request.user)
         return profile
 
     @action(url_path="me", methods=["GET"], detail=False, permission_classes=[])
     def get_me(self, request, *args, **kwargs):
-        permissions = self.request.user.get_all_permissions();
         data = {
             'username': self.request.user.username,
             'is_authenticated': self.request.user.is_authenticated,
             'is_staff': self.request.user.is_staff,
-            'permissions': permissions,
-            'can_create': self.request.user.has_perm('tasks.can_create'),
         }
 
         if self.request.user.is_authenticated:
+            second = self.request.session.get('second')
+            expire = self.request.session.get('second_expire')
+
+            if second and expire:
+                if timezone.now().timestamp() > expire:
+                    self.request.session.pop('second', None)
+                    self.request.session.pop('second_expire', None)
+                    second = False
+                    expire = None
+            else:
+                second = False
+                expire = None
+
             data.update({
-                'second': self.request.session.get('second') or False,
+                'second': second,
+                'second_expire': expire,
             })
-        
+
         return Response(data)
 
     class StatsSerializer(serializers.Serializer):
@@ -367,15 +409,32 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
     
     @action(url_path="second-login", methods=["POST"], detail=False, permission_classes=[])
     def second_login(self, *args, **kwargs):
-        
-        key = self.request.data.get('key')
-        if key == '123':
+        key = self.request.user.userprofile.totp_key
+        t = pyotp.totp.TOTP(key)
+
+        code = self.request.data.get('key')
+
+        if code == t.now():
             self.request.session['second'] = True;
-
-        return Response({"status":"success"})
+            self.request.session['second_expire'] = int(
+            (timezone.now() + timedelta(minutes=1)).timestamp()
+        )
+            return Response({"status":"success"})
+        
+        raise ValidationError({"key": "Неправильно"})
     
+    
+    @action(url_path="show-totp", methods=["POST"], detail=False, permission_classes=[])
+    def show_totp(self, *args, **kwargs):
 
-    @action(url_path="do-smth", methods=["POST"], detail=False, permission_classes=[SecondFactorPermission])
-    def do_smth(self, *args, **kwargs):
-        return Response({"success":True})
+        self.request.user.userprofile.totp_key = pyotp.random_base32()
+        self.request.user.userprofile.save()
 
+        url = pyotp.totp.TOTP(self.request.user.userprofile.totp_key).provisioning_uri(
+            name=self.request.user.username, 
+            issuer_name="TaskManager",
+            )
+        
+        return Response({
+            "url": url
+        })
