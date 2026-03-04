@@ -5,7 +5,6 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth';
 import { storeToRefs } from 'pinia';
 
-
 const router = useRouter()
 
 const userInfoStore = useAuthStore();
@@ -79,7 +78,7 @@ async function onLogout() {
     </nav>
   </div>
 
-  <div v-if="!second && is_authenticated && !is_staff" class="container mt-3">
+  <div v-if="!second && is_authenticated " class="container mt-3">
     <div class="alert alert-light border alert-dismissible fade show" role="alert">
       <i class="bi bi-pencil-square me-2 text-muted"></i>
       <span>

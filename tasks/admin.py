@@ -36,7 +36,7 @@ class TimeTrackingAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user', 'totp_key', 'name', 'birthday', 'type']
+    list_display = ['id', 'user', 'name', 'birthday', 'type']
     list_filter = ['type', 'created_at']
     search_fields = ['user__username', 'name']
     raw_id_fields = ['user']

@@ -118,10 +118,8 @@ class UserProfile(TimestampModel):
     totp_key = models.CharField(max_length=128, null=True, default=pyotp.random_base32)
         
     class Meta:
-        permissions = [
-            ("can_create", "Имеет право создавать"),
-            ("can_see_page", "Может смотреть на страницу")
-        ]
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
 
 
 @receiver(post_save, sender=User)

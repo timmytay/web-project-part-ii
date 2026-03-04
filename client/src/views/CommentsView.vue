@@ -346,16 +346,14 @@ onBeforeMount(async () => {
                 <div v-if="comment.picture" class="position-relative">
                   <img 
                     :src="comment.picture" 
-                    style="max-height: 200px; max-width: 60px;"
+                    style="max-height: 60px; max-width: 60px;"
                     class="img-thumbnail clickable-image" 
                     :alt="'Изображение к комментарию: ' + comment.text"
                     @click="openImageViewModal(comment.picture)"
                     title="Нажмите для увеличения"
-                    role="button"
-                    tabindex="0"
                     @keydown.enter="openImageViewModal(comment.picture)"
                   >
-                  <div class="image-hint">Нажмите для увеличения</div>
+                  <div class="image-hint">Нажмите</div>
                 </div>
               </div>
 
@@ -537,6 +535,7 @@ onBeforeMount(async () => {
               v-if="imageViewUrl"
               :alt="'Увеличенное изображение'"
             >
+            
           </div>
         </div>
       </div>

@@ -417,13 +417,10 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
         if code == t.now():
             self.request.session['second'] = True;
             self.request.session['second_expire'] = int(
-            (timezone.now() + timedelta(minutes=1)).timestamp()
+            (timezone.now() + timedelta(minutes=10)).timestamp()
         )
             return Response({"status":"success"})
         
-        raise ValidationError({"key": "Неправильно"})
-    
-    
     @action(url_path="show-totp", methods=["POST"], detail=False, permission_classes=[])
     def show_totp(self, *args, **kwargs):
 
