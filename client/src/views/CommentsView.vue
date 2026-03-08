@@ -214,12 +214,7 @@ onBeforeMount(async () => {
         <div class="row g-2 align-items-end">
           <div class="col-12">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="add-comment-task"
-                v-model="commentToAdd.task" 
-                required
-              >
+              <select class="form-select" id="add-comment-task" v-model="commentToAdd.task" required>
                 <option :value="task.id" v-for="task in tasks" :key="task.id">
                   {{ task.title }}
                 </option>
@@ -230,14 +225,8 @@ onBeforeMount(async () => {
 
           <div class="col-12">
             <div class="input-group">
-              <input 
-                class="form-control" 
-                type="file" 
-                id="add-comment-picture"
-                ref="commentsPictureRef" 
-                @change="commentsAddPictureChange"
-                accept="image/*"
-              >
+              <input class="form-control" type="file" id="add-comment-picture" ref="commentsPictureRef"
+                @change="commentsAddPictureChange" accept="image/*">
               <label class="input-group-text" for="add-comment-picture">Выбрать файл</label>
               <button v-if="commentAddImageUrl" type="button" class="btn btn-outline-secondary"
                 @click="removeAddPicture" title="Удалить изображение" aria-label="Удалить изображение">
@@ -248,31 +237,18 @@ onBeforeMount(async () => {
 
           <div class="col-12">
             <div v-if="commentAddImageUrl" class="position-relative">
-              <img 
-                :src="commentAddImageUrl" 
-                style="max-height: 60px;" 
-                class="img-thumbnail clickable-image" 
-                alt="Предпросмотр изображения"
-                @click="openImageViewModal(commentAddImageUrl)" 
-                title="Нажмите для увеличения"
-                role="button"
-                tabindex="0"
-                @keydown.enter="openImageViewModal(commentAddImageUrl)"
-              >
+              <img :src="commentAddImageUrl" style="max-height: 60px;" class="img-thumbnail clickable-image"
+                alt="Предпросмотр изображения" @click="openImageViewModal(commentAddImageUrl)"
+                title="Нажмите для увеличения" role="button" tabindex="0"
+                @keydown.enter="openImageViewModal(commentAddImageUrl)">
               <div class="image-hint">Нажмите для увеличения</div>
             </div>
           </div>
 
           <div class="col-12">
             <div class="form-floating">
-              <textarea 
-                class="form-control" 
-                id="add-comment-text"
-                v-model="commentToAdd.text" 
-                required 
-                placeholder="Текст комментария"
-                style="height: 60px"
-              ></textarea>
+              <textarea class="form-control" id="add-comment-text" v-model="commentToAdd.text" required
+                placeholder="Текст комментария" style="height: 60px"></textarea>
               <label for="add-comment-text">Текст комментария</label>
             </div>
           </div>
@@ -288,23 +264,14 @@ onBeforeMount(async () => {
         <div class="row g-3">
           <div class="col-md-5">
             <div class="form-floating">
-              <input 
-                type="text" 
-                class="form-control" 
-                id="filterText" 
-                v-model="filters.text"
-                placeholder="Введите текст"
-              >
+              <input type="text" class="form-control" id="filterText" v-model="filters.text"
+                placeholder="Введите текст">
               <label for="filterText">По тексту комментария</label>
             </div>
           </div>
           <div class="col-md-5">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="filterTask" 
-                v-model="filters.task"
-              >
+              <select class="form-select" id="filterTask" v-model="filters.task">
                 <option value="">Все задачи</option>
                 <option :value="task.id" v-for="task in tasks" :key="task.id">{{ task.title }}</option>
               </select>
@@ -339,63 +306,44 @@ onBeforeMount(async () => {
         </div>
 
         <div v-for="comment in filteredComments" :key="comment.id" class="comment-item card mb-2">
-          <div class="card-body">
-            <div class="row align-items-center">
+          <div class="card-body row align-items-center">
+            <!-- Картинка комментария -->
+            <div class="col-auto" v-if="comment.picture">
+              <img :src="comment.picture" class="img-thumbnail" style="max-width: 60px; max-height: 60px;"
+                alt="Изображение к комментарию" @click="openImageViewModal(comment.picture)">
+            </div>
 
-              <div class="col-auto">
-                <div v-if="comment.picture" class="position-relative">
-                  <img 
-                    :src="comment.picture" 
-                    style="max-height: 60px; max-width: 60px;"
-                    class="img-thumbnail clickable-image" 
-                    :alt="'Изображение к комментарию: ' + comment.text"
-                    @click="openImageViewModal(comment.picture)"
-                    title="Нажмите для увеличения"
-                    @keydown.enter="openImageViewModal(comment.picture)"
-                  >
-                  <div class="image-hint">Нажмите</div>
-                </div>
-              </div>
+            <!-- Текст и автор -->
+            <div class="col">
+              <p class="card-text mb-1">{{ comment.text }}</p>
+              <small class="text-muted d-block">Автор: {{ comment.user_name || 'Неизвестный автор' }}</small>
+              <small class="text-muted d-block">Задача: {{ comment.task_title }}</small>
+              <small class="text-muted d-block">Создан: {{ new Date(comment.created_at).toLocaleString() }}</small>
+            </div>
 
-              <div class="col-auto">
-                <strong>Задача {{ comment.task_title }}</strong>
-                <p class="card-text mb-1">{{ comment.text }}</p>
-                <small class="text-muted">
-                  <time :datetime="comment.created_at">{{ new Date(comment.created_at).toLocaleString() }}</time>
-                </small>
-              </div>
-
-              <div class="col-auto text-end">
-                <button 
-                  type="button" 
-                  class="btn btn-success btn-sm" 
-                  @click="onCommentEditClick(comment)"
-                  data-bs-toggle="modal" 
-                  data-bs-target="#editCommentModal"
-                  :aria-label="'Редактировать комментарий от ' + new Date(comment.created_at).toLocaleString()"
-                >
-                  <i class="bi bi-pencil" aria-hidden="true"></i>
-                </button>
-                <button 
-                  class="btn btn-danger btn-sm ms-1" 
-                  @click="onRemoveClick(comment)"
-                  :aria-label="'Удалить комментарий от ' + new Date(comment.created_at).toLocaleString()"
-                >
-                  <i class="bi bi-trash" aria-hidden="true"></i>
-                </button>
-              </div>
+            <!-- Кнопки редактирования/удаления -->
+            <div class="col-auto text-end">
+              <button type="button" class="btn btn-success btn-sm" @click="onCommentEditClick(comment)"
+                data-bs-toggle="modal" data-bs-target="#editCommentModal">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-danger btn-sm ms-1" @click="onRemoveClick(comment)">
+                <i class="bi bi-trash"></i>
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="modal fade" id="editCommentModal" tabindex="-1" aria-labelledby="editCommentModalTitle" aria-hidden="true">
+    <div class="modal fade" id="editCommentModal" tabindex="-1" aria-labelledby="editCommentModalTitle"
+      aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="editCommentModalTitle">Редактировать комментарий</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" @click="resetEditModal" aria-label="Закрыть"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" @click="resetEditModal"
+              aria-label="Закрыть"></button>
           </div>
           <div class="modal-body">
             <div class="row g-3">
@@ -404,27 +352,16 @@ onBeforeMount(async () => {
                 <div class="text-center mb-3">
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <p class="text-muted mb-0" id="current-image-label">Текущее изображение:</p>
-                    <button 
-                      type="button" 
-                      class="btn btn-outline-danger btn-sm" 
-                      @click="removeExistingImage"
-                      aria-describedby="current-image-label"
-                    >
+                    <button type="button" class="btn btn-outline-danger btn-sm" @click="removeExistingImage"
+                      aria-describedby="current-image-label">
                       <i class="bi bi-trash" aria-hidden="true"></i> Удалить
                     </button>
                   </div>
                   <div class="position-relative d-inline-block">
-                    <img 
-                      :src="commentToEdit.picture" 
-                      style="max-height: 100px;" 
-                      class="img-thumbnail clickable-image"
-                      alt="Текущее изображение" 
-                      @click="openImageViewModal(commentToEdit.picture)"
-                      title="Нажмите для увеличения"
-                      role="button"
-                      tabindex="0"
-                      @keydown.enter="openImageViewModal(commentToEdit.picture)"
-                    >
+                    <img :src="commentToEdit.picture" style="max-height: 100px;" class="img-thumbnail clickable-image"
+                      alt="Текущее изображение" @click="openImageViewModal(commentToEdit.picture)"
+                      title="Нажмите для увеличения" role="button" tabindex="0"
+                      @keydown.enter="openImageViewModal(commentToEdit.picture)">
                     <div class="image-hint">Нажмите для увеличения</div>
                   </div>
                   <div v-if="removeImageFlag" class="alert alert-warning mt-2 small" role="alert">
@@ -437,42 +374,24 @@ onBeforeMount(async () => {
                 <div class="mb-3">
                   <label for="edit-comment-picture" class="form-label">Новое изображение</label>
                   <div class="input-group">
-                    <input 
-                      class="form-control" 
-                      type="file" 
-                      id="edit-comment-picture"
-                      ref="commentEditPictureRef"
-                      @change="commentsEditPictureChange" 
-                      accept="image/*"
-                      aria-describedby="edit-picture-help"
-                    >
-                    <button 
-                      v-if="commentEditImageUrl" 
-                      type="button" 
-                      class="btn btn-outline-secondary"
-                      @click="removeEditPicture"
-                      aria-label="Удалить выбранное изображение"
-                    >
+                    <input class="form-control" type="file" id="edit-comment-picture" ref="commentEditPictureRef"
+                      @change="commentsEditPictureChange" accept="image/*" aria-describedby="edit-picture-help">
+                    <button v-if="commentEditImageUrl" type="button" class="btn btn-outline-secondary"
+                      @click="removeEditPicture" aria-label="Удалить выбранное изображение">
                       <i class="bi bi-x" aria-hidden="true"></i>
                     </button>
                   </div>
-                  <div id="edit-picture-help" class="form-text">Оставьте пустым, чтобы оставить текущее изображение</div>
+                  <div id="edit-picture-help" class="form-text">Оставьте пустым, чтобы оставить текущее изображение
+                  </div>
                 </div>
 
                 <div class="text-center mb-3" v-if="commentEditImageUrl && commentEditPictureRef?.files?.length">
                   <p class="text-muted mb-1">Предпросмотр нового изображения:</p>
                   <div class="position-relative d-inline-block">
-                    <img 
-                      :src="commentEditImageUrl" 
-                      style="max-height: 100px;" 
-                      class="img-thumbnail clickable-image"
-                      alt="Предпросмотр нового изображения" 
-                      @click="openImageViewModal(commentEditImageUrl)"
-                      title="Нажмите для увеличения"
-                      role="button"
-                      tabindex="0"
-                      @keydown.enter="openImageViewModal(commentEditImageUrl)"
-                    >
+                    <img :src="commentEditImageUrl" style="max-height: 100px;" class="img-thumbnail clickable-image"
+                      alt="Предпросмотр нового изображения" @click="openImageViewModal(commentEditImageUrl)"
+                      title="Нажмите для увеличения" role="button" tabindex="0"
+                      @keydown.enter="openImageViewModal(commentEditImageUrl)">
                     <div class="image-hint">Нажмите для увеличения</div>
                   </div>
                 </div>
@@ -480,25 +399,15 @@ onBeforeMount(async () => {
 
               <div class="col-12">
                 <div class="form-floating">
-                  <textarea 
-                    class="form-control" 
-                    id="edit-comment-text"
-                    v-model="commentToEdit.text" 
-                    style="height: 100px" 
-                    required
-                  ></textarea>
+                  <textarea class="form-control" id="edit-comment-text" v-model="commentToEdit.text"
+                    style="height: 100px" required></textarea>
                   <label for="edit-comment-text">Текст комментария</label>
                 </div>
               </div>
 
               <div class="col-12">
                 <div class="form-floating">
-                  <select 
-                    class="form-select" 
-                    id="edit-comment-task"
-                    v-model="commentToEdit.task" 
-                    required
-                  >
+                  <select class="form-select" id="edit-comment-task" v-model="commentToEdit.task" required>
                     <option :value="task.id" v-for="task in tasks" :key="task.id">
                       {{ task.title }}
                     </option>
@@ -520,7 +429,8 @@ onBeforeMount(async () => {
       </div>
     </div>
 
-    <div class="modal fade" id="imageViewModal" tabindex="-1" style="display: none;" aria-labelledby="imageViewModalTitle" aria-hidden="true">
+    <div class="modal fade" id="imageViewModal" tabindex="-1" style="display: none;"
+      aria-labelledby="imageViewModalTitle" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -528,14 +438,9 @@ onBeforeMount(async () => {
             <button type="button" class="btn-close" @click="closeImageViewModal" aria-label="Закрыть"></button>
           </div>
           <div class="modal-body text-center">
-            <img 
-              :src="imageViewUrl" 
-              class="img-fluid" 
-              style="max-height: 70vh; object-fit: contain;"
-              v-if="imageViewUrl"
-              :alt="'Увеличенное изображение'"
-            >
-            
+            <img :src="imageViewUrl" class="img-fluid" style="max-height: 70vh; object-fit: contain;"
+              v-if="imageViewUrl" :alt="'Увеличенное изображение'">
+
           </div>
         </div>
       </div>

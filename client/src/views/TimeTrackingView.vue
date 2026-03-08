@@ -107,12 +107,7 @@ onBeforeMount(async () => {
         <div class="row g-2">
           <div class="col-md-4">
             <div class="form-floating">
-              <select 
-                id="addTask" 
-                class="form-select" 
-                v-model="timeToAdd.task" 
-                required
-              >
+              <select id="addTask" class="form-select" v-model="timeToAdd.task" required>
                 <option value="">Выберите задачу</option>
                 <option :value="task.id" v-for="task in tasks" :key="task.id">
                   {{ task.title }}
@@ -123,24 +118,14 @@ onBeforeMount(async () => {
           </div>
           <div class="col-md-3">
             <div class="form-floating">
-              <input 
-                type="datetime-local" 
-                id="addStartTime"
-                class="form-control" 
-                v-model="timeToAdd.start_time" 
-                required
-              >
+              <input type="datetime-local" id="addStartTime" class="form-control" v-model="timeToAdd.start_time"
+                required>
               <label for="addStartTime">Начало</label>
             </div>
           </div>
           <div class="col-md-3">
             <div class="form-floating">
-              <input 
-                type="datetime-local" 
-                id="addEndTime"
-                class="form-control" 
-                v-model="timeToAdd.end_time"
-              >
+              <input type="datetime-local" id="addEndTime" class="form-control" v-model="timeToAdd.end_time">
               <label for="addEndTime">Окончание</label>
             </div>
           </div>
@@ -151,13 +136,8 @@ onBeforeMount(async () => {
         <div class="row mt-2">
           <div class="col-12">
             <div class="form-floating">
-              <input 
-                type="text" 
-                id="addDescription"
-                class="form-control" 
-                v-model="timeToAdd.description" 
-                placeholder="Описание работы"
-              >
+              <input type="text" id="addDescription" class="form-control" v-model="timeToAdd.description"
+                placeholder="Описание работы">
               <label for="addDescription">Описание работы</label>
             </div>
           </div>
@@ -169,11 +149,7 @@ onBeforeMount(async () => {
         <div class="row g-3">
           <div class="col-md-3">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="filterTask" 
-                v-model="filters.task"
-              >
+              <select class="form-select" id="filterTask" v-model="filters.task">
                 <option value="">Все задачи</option>
                 <option :value="task.id" v-for="task in tasks" :key="task.id">
                   {{ task.title }}
@@ -184,44 +160,25 @@ onBeforeMount(async () => {
           </div>
           <div class="col-md-3">
             <div class="form-floating">
-              <input 
-                type="text" 
-                class="form-control" 
-                id="filterDescription" 
-                v-model="filters.description"
-                placeholder="Введите описание"
-              >
+              <input type="text" class="form-control" id="filterDescription" v-model="filters.description"
+                placeholder="Введите описание">
               <label for="filterDescription">По описанию</label>
             </div>
           </div>
           <div class="col-md-2">
             <div class="form-floating">
-              <input 
-                type="date" 
-                class="form-control" 
-                id="filterDateFrom" 
-                v-model="filters.dateFrom"
-              >
+              <input type="date" class="form-control" id="filterDateFrom" v-model="filters.dateFrom">
               <label for="filterDateFrom">Дата с</label>
             </div>
           </div>
           <div class="col-md-2">
             <div class="form-floating">
-              <input 
-                type="date" 
-                class="form-control" 
-                id="filterDateTo" 
-                v-model="filters.dateTo"
-              >
+              <input type="date" class="form-control" id="filterDateTo" v-model="filters.dateTo">
               <label for="filterDateTo">Дата по</label>
             </div>
           </div>
           <div class="col-md-2 d-flex align-items-center">
-            <button 
-              type="button"
-              class="btn btn-outline-secondary w-100" 
-              @click="resetFilters"
-            >
+            <button type="button" class="btn btn-outline-secondary w-100" @click="resetFilters">
               <i class="bi bi-x-circle"></i> Сбросить
             </button>
           </div>
@@ -248,45 +205,37 @@ onBeforeMount(async () => {
         </div>
 
         <div v-for="time in filteredTimeTrackings" :key="time.id" class="time-item card mb-2">
-          <div class="card-body">
-            <div class="row align-items-center">
-              <div class="col-md-4">
-                <strong>{{ time.task_title }}</strong>
-              </div>
-              <div class="col-md-2">
-                <small>
-                  Начало:<br>
-                  {{ new Date(time.start_time).toLocaleString() }}
-                </small>
-              </div>
-              <div class="col-md-2">
-                <small>
-                  Окончание:<br>
-                  {{ time.end_time ? new Date(time.end_time).toLocaleString() : 'В процессе' }}
-                </small>
-              </div>
-              <div class="col-md-2">
-                <p class="card-text mb-1 small">{{ time.description || 'Нет описания' }}</p>
-              </div>
-              <div class="col-md-2 text-end">
-                <button 
-                  type="button" 
-                  class="btn btn-success btn-sm" 
-                  @click="onTimeEditClick(time)"
-                  data-bs-toggle="modal" 
-                  data-bs-target="#editTimeModal"
-                  :aria-label="'Редактировать запись для задачи ' + time.task_title"
-                >
-                  <i class="bi bi-pencil" aria-hidden="true"></i>
-                </button>
-                <button 
-                  class="btn btn-danger btn-sm ms-1" 
-                  @click="onRemoveClick(time)"
-                  :aria-label="'Удалить запись для задачи ' + time.task_title"
-                >
-                  <i class="bi bi-trash" aria-hidden="true"></i>
-                </button>
-              </div>
+          <div class="card-body row align-items-center">
+            <div class="col-md-3">
+              <strong>{{ time.task_title }}</strong>
+            </div>
+            <div class="col-md-2">
+              <small>
+                Начало:<br>
+                {{ new Date(time.start_time).toLocaleString() }}
+              </small>
+            </div>
+            <div class="col-md-2">
+              <small>
+                Окончание:<br>
+                {{ time.end_time ? new Date(time.end_time).toLocaleString() : 'В процессе' }}
+              </small>
+            </div>
+            <div class="col-md-3">
+              <p class="card-text mb-1 small">{{ time.description || 'Нет описания' }}</p>
+              <small class="text-muted d-block">
+                Автор: {{ time.user_name || 'Неизвестный автор' }}
+              </small>
+            </div>
+            <div class="col-md-2 text-end">
+              <button type="button" class="btn btn-success btn-sm" @click="onTimeEditClick(time)" data-bs-toggle="modal"
+                data-bs-target="#editTimeModal" :aria-label="'Редактировать запись для задачи ' + time.task_title">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-danger btn-sm ms-1" @click="onRemoveClick(time)"
+                :aria-label="'Удалить запись для задачи ' + time.task_title">
+                <i class="bi bi-trash"></i>
+              </button>
             </div>
           </div>
         </div>
@@ -304,35 +253,21 @@ onBeforeMount(async () => {
             <div class="row g-3">
               <div class="col-12">
                 <div class="form-floating">
-                  <input 
-                    type="datetime-local" 
-                    id="editStartTime"
-                    class="form-control" 
-                    v-model="timeToEdit.start_time" 
-                    required
-                  >
+                  <input type="datetime-local" id="editStartTime" class="form-control" v-model="timeToEdit.start_time"
+                    required>
                   <label for="editStartTime">Начало</label>
                 </div>
               </div>
               <div class="col-12">
                 <div class="form-floating">
-                  <input 
-                    type="datetime-local" 
-                    id="editEndTime"
-                    class="form-control" 
-                    v-model="timeToEdit.end_time"
-                  >
+                  <input type="datetime-local" id="editEndTime" class="form-control" v-model="timeToEdit.end_time">
                   <label for="editEndTime">Окончание</label>
                 </div>
               </div>
               <div class="col-12">
                 <div class="form-floating">
-                  <textarea 
-                    id="editDescription"
-                    class="form-control" 
-                    v-model="timeToEdit.description" 
-                    style="height: 100px"
-                  ></textarea>
+                  <textarea id="editDescription" class="form-control" v-model="timeToEdit.description"
+                    style="height: 100px"></textarea>
                   <label for="editDescription">Описание работы</label>
                 </div>
               </div>
@@ -340,12 +275,7 @@ onBeforeMount(async () => {
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-            <button 
-              type="button" 
-              class="btn btn-primary" 
-              data-bs-dismiss="modal"
-              @click="onUpdateTime"
-            >
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" @click="onUpdateTime">
               Сохранить
             </button>
           </div>
