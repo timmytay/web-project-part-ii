@@ -20,6 +20,9 @@ from .serializers import (
     CommentSerializer, TimeTrackingSerializer, UserProfileSerializer
 )
 
+"""вопрос: почему нет декоратора?
+ответ: потому что у нас уже есть CRUD. без С. следовательно мы назначаем пермишены, если юзер хочет сделать другие операции со страницей"""
+
 class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
@@ -36,12 +39,9 @@ class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
     def get_queryset(self):
         qs = super().get_queryset()
         
-        if self.request.user.is_superuser:
-            user_id = self.request.query_params.get('user_id')
-            if user_id:
-                qs = qs.filter(user_id=user_id)
-        else:
-            qs = qs.filter(user=self.request.user)
+        user_id = self.request.query_params.get('user_id')
+        if user_id:
+            qs = qs.filter(user_id=user_id)
         
         return qs
 
@@ -105,17 +105,13 @@ class ColumnViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelM
     def get_queryset(self):
         qs = super().get_queryset()
         
-        if self.request.user.is_superuser:
-            user_id = self.request.query_params.get('user_id')
-            project_id = self.request.query_params.get('project_id')
+        user_id = self.request.query_params.get('user_id')
+        project_id = self.request.query_params.get('project_id')
             
-            if user_id:
-                qs = qs.filter(project__user_id=user_id)
-            if project_id:
-                qs = qs.filter(project_id=project_id)
-        else:
-            qs = qs.filter(project__user=self.request.user)
-        
+        if user_id:
+            qs = qs.filter(project__user_id=user_id)
+        if project_id:
+            qs = qs.filter(project_id=project_id)
         qs = qs.order_by('project', 'order')
         return qs
 
@@ -124,7 +120,7 @@ class ColumnViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelM
         
         if not self.request.user.is_superuser and project.user != self.request.user:
             raise serializers.ValidationError(
-                {"project": "Вы не можете добавлять колонки в чужие проекты"}
+                {"project": "вы не можете добавлять колонки в чужие проекты"}
             )
         serializer.save()
 
@@ -150,20 +146,17 @@ class TaskViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
 
     def get_queryset(self):
         qs = super().get_queryset()
-        
-        if self.request.user.is_superuser:
-            user_id = self.request.query_params.get('user_id')
-            project_id = self.request.query_params.get('project_id')
-            column_id = self.request.query_params.get('column_id')
+    
+        user_id = self.request.query_params.get('user_id')
+        project_id = self.request.query_params.get('project_id')
+        column_id = self.request.query_params.get('column_id')
             
-            if user_id:
-                qs = qs.filter(column__project__user_id=user_id)
-            if project_id:
-                qs = qs.filter(column__project_id=project_id)
-            if column_id:
-                qs = qs.filter(column_id=column_id)
-        else:
-            qs = qs.filter(column__project__user=self.request.user)
+        if user_id:
+            qs = qs.filter(column__project__user_id=user_id)
+        if project_id:
+            qs = qs.filter(column__project_id=project_id)
+        if column_id:
+            qs = qs.filter(column_id=column_id)
         
         qs = qs.order_by('-created_at')
         return qs
@@ -173,7 +166,7 @@ class TaskViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
         
         if not self.request.user.is_superuser and column.project.user != self.request.user:
             raise serializers.ValidationError(
-                {"column": "Вы не можете добавлять задачи в чужие колонки"}
+                {"column": "вы не можете добавлять задачи в чужие колонки"}
             )
         
         assigned_to = serializer.validated_data.get('assigned_to')
@@ -207,21 +200,17 @@ class CommentViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
 
     def get_queryset(self):
         qs = super().get_queryset()
-        
-        if self.request.user.is_superuser:
-            user_id = self.request.query_params.get('user_id')
-            task_id = self.request.query_params.get('task_id')
-            project_id = self.request.query_params.get('project_id')
+        user_id = self.request.query_params.get('user_id')
+        task_id = self.request.query_params.get('task_id')
+        project_id = self.request.query_params.get('project_id')
             
-            if user_id:
-                qs = qs.filter(user_id=user_id)
-            if task_id:
-                qs = qs.filter(task_id=task_id)
-            if project_id:
-                qs = qs.filter(task__column__project_id=project_id)
-        else:
-            qs = qs.filter(task__column__project__user=self.request.user)
-        
+        if user_id:
+            qs = qs.filter(user_id=user_id)
+        if task_id:
+            qs = qs.filter(task_id=task_id)
+        if project_id:
+            qs = qs.filter(task__column__project_id=project_id)
+
         qs = qs.order_by('-created_at')
         return qs
 
@@ -230,7 +219,7 @@ class CommentViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
         
         if not self.request.user.is_superuser and task.column.project.user != self.request.user:
             raise serializers.ValidationError(
-                {"task": "Вы не можете добавлять комментарии к чужим задачам"}
+                {"task": "вы не можете добавлять комментарии к чужим задачам"}
             )
         
         if self.request.user.is_superuser:
@@ -264,20 +253,17 @@ class TimeTrackingViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.Update
     def get_queryset(self):
         qs = super().get_queryset()
         
-        if self.request.user.is_superuser:
-            user_id = self.request.query_params.get('user_id')
-            task_id = self.request.query_params.get('task_id')
-            project_id = self.request.query_params.get('project_id')
+        user_id = self.request.query_params.get('user_id')
+        task_id = self.request.query_params.get('task_id')
+        project_id = self.request.query_params.get('project_id')
             
-            if user_id:
-                qs = qs.filter(user_id=user_id)
-            if task_id:
-                qs = qs.filter(task_id=task_id)
-            if project_id:
-                qs = qs.filter(task__column__project_id=project_id)
-        else:
-            qs = qs.filter(task__column__project__user=self.request.user)
-        
+        if user_id:
+            qs = qs.filter(user_id=user_id)
+        if task_id:
+            qs = qs.filter(task_id=task_id)
+        if project_id:
+            qs = qs.filter(task__column__project_id=project_id)
+
         qs = qs.order_by('-start_time')
         return qs
 
@@ -286,14 +272,12 @@ class TimeTrackingViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.Update
         
         if not self.request.user.is_superuser and task.column.project.user != self.request.user:
             raise serializers.ValidationError(
-                {"task": "Вы не можете отслеживать время для чужих задач"}
+                {"task": "вы не можете отслеживать время для чужих задач"}
             )
         
         if self.request.user.is_superuser:
             user = serializer.validated_data.get('user', self.request.user)
             serializer.save(user=user)
-        else:
-            serializer.save(user=self.request.user)
 
     class StatsSerializer(serializers.Serializer):
         count = serializers.IntegerField()
@@ -337,7 +321,7 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
         
         profile, created = UserProfile.objects.get_or_create(user=self.request.user)
         return profile
-
+    """пояснение: у нас есть second (есть ли у юзверя двухфакторка? и expire (когда истечет время?))"""
     @action(url_path="me", methods=["GET"], detail=False, permission_classes=[])
     def get_me(self, request, *args, **kwargs):
         data = {
@@ -345,7 +329,7 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
             'is_authenticated': self.request.user.is_authenticated,
             'is_staff': self.request.user.is_staff,
         }
-
+        """вся эта конструкция нужна для корректного отображения плашки: по истечении времени экспайр идет на 0, как и секонд"""
         if self.request.user.is_authenticated:
             second = self.request.session.get('second')
             expire = self.request.session.get('second_expire')
@@ -398,20 +382,20 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
             login(self.request, user)
         else:
             return Response({"status": "failed"}, status=401)
-        
+        """нет времени объяснять. он регается"""
         return Response({"status":"success"})
     
     @action(url_path="logout", methods=["POST"], detail=False, permission_classes=[])
     def process_logout(self, *args, **kwargs):
         logout(self.request)
-
+        
         return Response({"status":"success"})
     
     @action(url_path="second-login", methods=["POST"], detail=False, permission_classes=[])
     def second_login(self, *args, **kwargs):
         key = self.request.user.userprofile.totp_key
         t = pyotp.totp.TOTP(key)
-
+        """позже о коде, сейчас мы приводим к инту время, к которому сессия истечёт. у нас это 10 мин"""
         code = self.request.data.get('key')
 
         if code == t.now():
@@ -423,10 +407,13 @@ class UserViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
         
     @action(url_path="show-totp", methods=["POST"], detail=False, permission_classes=[])
     def show_totp(self, *args, **kwargs):
+        """random_base32 для генерации каждый раз, когда юзер обновляет страницу и у него нет двушки"""
 
         self.request.user.userprofile.totp_key = pyotp.random_base32()
         self.request.user.userprofile.save()
 
+        """and he shall be named timmie!!!"""
+        
         url = pyotp.totp.TOTP(self.request.user.userprofile.totp_key).provisioning_uri(
             name=self.request.user.username, 
             issuer_name="TaskManager",

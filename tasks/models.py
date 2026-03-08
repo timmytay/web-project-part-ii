@@ -10,7 +10,7 @@ class Project(models.Model):
     description = models.TextField("Описание", blank=True)
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
     user = models.ForeignKey("auth.User", verbose_name="Пользователь", on_delete=models.CASCADE, null=True)
-
+    
     class Meta:
         verbose_name = "Проект"
         verbose_name_plural = "Проекты"
