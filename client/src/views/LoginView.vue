@@ -45,4 +45,3 @@ async function clickForm() {
     </div>
   </form>
 </template>
-<style></style>

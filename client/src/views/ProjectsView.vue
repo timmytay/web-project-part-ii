@@ -206,7 +206,6 @@ onBeforeMount(async () => {
     </div>
   </div>
 
-  <!-- EDIT MODAL -->
   <div class="modal fade" id="editProjectModal">
     <div class="modal-dialog">
       <div class="modal-content">

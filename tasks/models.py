@@ -52,7 +52,6 @@ class Task(models.Model):
     status = models.CharField("Статус", max_length=15, choices=STATUS_CHOICES, default='todo')
     due_date = models.DateField("Срок выполнения", null=True, blank=True)
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
-    updated_at = models.DateTimeField("Дата обновления", auto_now=True)
     picture = models.ImageField("Изображение", null=True, upload_to="tasks")
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name="Создатель", null=True, blank=True, related_name='created_tasks')
     assignee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name="Исполнитель", null=True, blank=True, related_name='assigned_tasks')
@@ -98,8 +97,6 @@ class TimeTracking(models.Model):
     
 class TimestampModel(models.Model):
     created_at = models.DateTimeField(auto_created=True, auto_now_add=True,null=True)
-    updated_at = models.DateTimeField(auto_now_add=True,null=True)
-    
     class Meta:
         abstract = True
 

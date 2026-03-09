@@ -9,8 +9,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = UserProfile
-        fields = ['id', 'username', 'email', 'password', 'name', 'birthday', 'type', 'created_at', 'updated_at', 'user']
-        read_only_fields = ['user', 'created_at', 'updated_at']
+        fields = ['id', 'username', 'email', 'password', 'name', 'birthday', 'type', 'created_at', 'user']
+        read_only_fields = ['user', 'created_at']
 
     def create(self, validated_data):
         user_data = validated_data.pop('user', {})
@@ -80,7 +80,7 @@ class TaskSerializer(serializers.ModelSerializer):
         model = Task
         fields = [
             'id', 'title', 'description', 'column', 'column_name', 
-            'priority', 'status', 'due_date', 'created_at', 'updated_at', 
+            'priority', 'status', 'due_date', 'created_at', 
             'picture', 'creator', 'creator_name', 'assignee', 'assignee_name'
         ]
         read_only_fields = ['creator']

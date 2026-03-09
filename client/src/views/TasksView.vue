@@ -5,20 +5,30 @@ import axios from 'axios';
 const loading = ref(false);
 const tasks = ref([]);
 const columns = ref([]);
+const users = ref([]);
+
 const taskToAdd = ref({});
 const taskToEdit = ref({});
+
 const taskAddPictureRef = ref(null);
 const taskAddImageUrl = ref('');
+
 const taskEditPictureRef = ref(null);
 const taskEditImageUrl = ref('');
+
 const taskToEditOriginal = ref(null);
 const removeImageFlag = ref(false);
+
 const imageViewUrl = ref('');
 const imageViewModal = ref(null);
+
 const stats = ref(null);
 
 const filters = ref({
-  title: '', column: '', status: '', priority: ''
+  title: '',
+  column: '',
+  status: '',
+  priority: ''
 });
 
 const statusOptions = [
@@ -39,11 +49,12 @@ const filteredTasks = computed(() => tasks.value.filter(task => {
   const matchesColumn = !filters.value.column || task.column === parseInt(filters.value.column);
   const matchesStatus = !filters.value.status || task.status === filters.value.status;
   const matchesPriority = !filters.value.priority || task.priority === filters.value.priority;
+
   return matchesTitle && matchesColumn && matchesStatus && matchesPriority;
 }));
 
 function resetFilters() {
-  filters.value = {title: '', column: '', status: '', priority: ''};
+  filters.value = { title: '', column: '', status: '', priority: '' };
 }
 
 async function fetchTasks() {
@@ -56,6 +67,11 @@ async function fetchTasks() {
 async function fetchColumns() {
   const r = await axios.get("/api/columns/");
   columns.value = r.data;
+}
+
+async function fetchUsers() {
+  const r = await axios.get("/api/users/");
+  users.value = r.data;
 }
 
 async function fetchStats() {
@@ -80,46 +96,6 @@ function taskEditPictureChange() {
   }
 }
 
-function openImageViewModal(imageUrl) {
-  imageViewUrl.value = imageUrl;
-
-  const modalElement = document.getElementById('imageViewModal');
-  if (modalElement) {
-    modalElement.style.display = 'block';
-    modalElement.classList.add('show');
-
-    const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop fade show';
-    backdrop.id = 'imageViewModalBackdrop';
-    document.body.appendChild(backdrop);
-
-    backdrop.onclick = closeImageViewModal;
-
-    const handleEsc = (e) => e.key === 'Escape' && closeImageViewModal();
-    document.addEventListener('keydown', handleEsc);
-
-    imageViewModal.value = { handleEsc };
-  }
-}
-
-function closeImageViewModal() {
-  const modalElement = document.getElementById('imageViewModal');
-  const backdrop = document.getElementById('imageViewModalBackdrop');
-
-  if (modalElement) {
-    modalElement.style.display = 'none';
-    modalElement.classList.remove('show');
-  }
-
-  if (backdrop) backdrop.remove();
-  if (imageViewModal.value?.handleEsc) {
-    document.removeEventListener('keydown', imageViewModal.value.handleEsc);
-  }
-
-  imageViewUrl.value = '';
-  imageViewModal.value = null;
-}
-
 async function onTaskAdd() {
   const formData = new FormData();
 
@@ -133,13 +109,20 @@ async function onTaskAdd() {
     }
   }
 
+  if (taskToAdd.value.assignee) {
+    formData.append('assignee', taskToAdd.value.assignee);
+  }
+
   await axios.post("/api/tasks/", formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
 
   taskToAdd.value = {};
   taskAddImageUrl.value = '';
-  if (taskAddPictureRef.value) taskAddPictureRef.value.value = '';
+
+  if (taskAddPictureRef.value) {
+    taskAddPictureRef.value.value = '';
+  }
 
   await Promise.all([fetchTasks(), fetchStats()]);
 }
@@ -170,8 +153,15 @@ async function onUpdateTask() {
   formData.append('column', taskToEdit.value.column);
   formData.append('status', taskToEdit.value.status);
   formData.append('priority', taskToEdit.value.priority);
+
   if (taskToEdit.value.due_date) {
     formData.append('due_date', taskToEdit.value.due_date);
+  }
+
+  if (taskToEdit.value.assignee) {
+    formData.append('assignee', taskToEdit.value.assignee);
+  } else {
+    formData.append('assignee', '');
   }
 
   await axios.patch(`/api/tasks/${taskToEdit.value.id}/`, formData, {
@@ -183,7 +173,9 @@ async function onUpdateTask() {
   taskToEditOriginal.value = null;
   removeImageFlag.value = false;
 
-  if (taskEditPictureRef.value) taskEditPictureRef.value.value = '';
+  if (taskEditPictureRef.value) {
+    taskEditPictureRef.value.value = '';
+  }
 
   await Promise.all([fetchTasks(), fetchStats()]);
 }
@@ -205,29 +197,13 @@ function getPriorityLabel(priority) {
   return found ? found.label : priority;
 }
 
-function removeAddPicture() {
-  taskAddImageUrl.value = '';
-  if (taskAddPictureRef.value) taskAddPictureRef.value.value = '';
-}
-
-function removeEditPicture() {
-  taskEditImageUrl.value = '';
-  if (taskEditPictureRef.value) taskEditPictureRef.value.value = '';
-}
-
-function removeExistingImage() {
-  removeImageFlag.value = true;
-  taskEditImageUrl.value = '';
-  if (taskEditPictureRef.value) taskEditPictureRef.value.value = '';
-}
-
-function resetEditModal() {
-  removeEditPicture();
-  removeImageFlag.value = false;
-}
-
 onBeforeMount(async () => {
-  await Promise.all([fetchTasks(), fetchColumns(), fetchStats()]);
+  await Promise.all([
+    fetchTasks(),
+    fetchColumns(),
+    fetchUsers(),
+    fetchStats()
+  ]);
 });
 </script>
 
@@ -240,26 +216,15 @@ onBeforeMount(async () => {
         <div class="row g-2 align-items-end">
           <div class="col-md-3">
             <div class="form-floating">
-              <input 
-                type="text" 
-                class="form-control" 
-                id="taskTitle"
-                v-model="taskToAdd.title" 
-                required
-                placeholder="Название задачи"
-              >
+              <input type="text" class="form-control" id="taskTitle" v-model="taskToAdd.title" required
+                placeholder="Название задачи">
               <label for="taskTitle">Название задачи</label>
             </div>
           </div>
 
           <div class="col-md-3">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="taskColumn"
-                v-model="taskToAdd.column" 
-                required
-              >
+              <select class="form-select" id="taskColumn" v-model="taskToAdd.column" required>
                 <option :value="col.id" v-for="col in columns">{{ col.name }}</option>
               </select>
               <label for="taskColumn">Колонка</label>
@@ -268,11 +233,7 @@ onBeforeMount(async () => {
 
           <div class="col-md-2">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="taskPriority"
-                v-model="taskToAdd.priority"
-              >
+              <select class="form-select" id="taskPriority" v-model="taskToAdd.priority">
                 <option value="medium">Средний</option>
                 <option value="low">Низкий</option>
                 <option value="high">Высокий</option>
@@ -283,11 +244,7 @@ onBeforeMount(async () => {
 
           <div class="col-md-2">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="taskStatus"
-                v-model="taskToAdd.status"
-              >
+              <select class="form-select" id="taskStatus" v-model="taskToAdd.status">
                 <option value="todo">К выполнению</option>
                 <option value="in_progress">В работе</option>
                 <option value="review">На проверке</option>
@@ -299,35 +256,19 @@ onBeforeMount(async () => {
 
           <div class="col-md-2">
             <div class="form-floating">
-              <input 
-                type="date" 
-                class="form-control" 
-                id="taskDueDate"
-                v-model="taskToAdd.due_date"
-                placeholder="Срок выполнения"
-              >
+              <input type="date" class="form-control" id="taskDueDate" v-model="taskToAdd.due_date"
+                placeholder="Срок выполнения">
               <label for="taskDueDate">Срок выполнения</label>
             </div>
           </div>
 
           <div class="col-12">
             <div class="input-group">
-              <input 
-                class="form-control" 
-                type="file" 
-                id="taskPicture"
-                ref="taskAddPictureRef" 
-                @change="taskAddPictureChange"
-                accept="image/*"
-              >
+              <input class="form-control" type="file" id="taskPicture" ref="taskAddPictureRef"
+                @change="taskAddPictureChange" accept="image/*">
               <label class="input-group-text" for="taskPicture">Выбрать изображение</label>
-              <button 
-                v-if="taskAddImageUrl" 
-                type="button" 
-                class="btn btn-outline-secondary" 
-                @click="removeAddPicture"
-                title="Удалить изображение"
-              >
+              <button v-if="taskAddImageUrl" type="button" class="btn btn-outline-secondary" @click="removeAddPicture"
+                title="Удалить изображение">
                 <i class="bi bi-x"></i>
               </button>
             </div>
@@ -335,28 +276,29 @@ onBeforeMount(async () => {
 
           <div class="col-auto">
             <div v-if="taskAddImageUrl" class="position-relative">
-              <img 
-                :src="taskAddImageUrl" 
-                style="max-height: 60px;" 
-                class="img-thumbnail clickable-image" 
-                alt="Предпросмотр изображения задачи"
-                @click="openImageViewModal(taskAddImageUrl)" 
-                title="Нажмите для увеличения"
-              >
+              <img :src="taskAddImageUrl" style="max-height: 60px;" class="img-thumbnail clickable-image"
+                alt="Предпросмотр изображения задачи" @click="openImageViewModal(taskAddImageUrl)"
+                title="Нажмите для увеличения">
               <div class="image-hint">Нажмите</div>
             </div>
           </div>
 
           <div class="col-md-12 mt-2">
             <div class="form-floating">
-              <textarea 
-                class="form-control" 
-                id="taskDescription"
-                v-model="taskToAdd.description" 
-                placeholder="Описание задачи"
-                style="height: 60px"
-              ></textarea>
+              <textarea class="form-control" id="taskDescription" v-model="taskToAdd.description"
+                placeholder="Описание задачи" style="height: 60px"></textarea>
               <label for="taskDescription">Описание задачи</label>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="form-floating">
+              <select class="form-select" v-model="taskToAdd.assignee">
+                <option :value="null">Не назначен</option>
+                <option v-for="user in users" :key="user.user" :value="user.user">
+                  {{ user.username }}
+                </option>
+              </select>
+              <label>Исполнитель</label>
             </div>
           </div>
 
@@ -371,23 +313,14 @@ onBeforeMount(async () => {
         <div class="row g-3">
           <div class="col-md-3">
             <div class="form-floating">
-              <input 
-                type="text" 
-                class="form-control" 
-                id="filterTitle" 
-                v-model="filters.title"
-                placeholder="Введите название"
-              >
+              <input type="text" class="form-control" id="filterTitle" v-model="filters.title"
+                placeholder="Введите название">
               <label for="filterTitle">По названию</label>
             </div>
           </div>
           <div class="col-md-3">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="filterColumn" 
-                v-model="filters.column"
-              >
+              <select class="form-select" id="filterColumn" v-model="filters.column">
                 <option value="">Все колонки</option>
                 <option :value="col.id" v-for="col in columns">{{ col.name }}</option>
               </select>
@@ -396,11 +329,7 @@ onBeforeMount(async () => {
           </div>
           <div class="col-md-2">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="filterStatus" 
-                v-model="filters.status"
-              >
+              <select class="form-select" id="filterStatus" v-model="filters.status">
                 <option value="">Все статусы</option>
                 <option v-for="status in statusOptions" :value="status.value">
                   {{ status.label }}
@@ -411,11 +340,7 @@ onBeforeMount(async () => {
           </div>
           <div class="col-md-2">
             <div class="form-floating">
-              <select 
-                class="form-select" 
-                id="filterPriority" 
-                v-model="filters.priority"
-              >
+              <select class="form-select" id="filterPriority" v-model="filters.priority">
                 <option value="">Все приоритеты</option>
                 <option v-for="priority in priorityOptions" :value="priority.value">
                   {{ priority.label }}
@@ -436,8 +361,32 @@ onBeforeMount(async () => {
         </div>
       </div>
 
-      <div v-if="stats" class="mb-3 text-muted small">
-        Всего задач: <strong>{{ stats.count }}</strong>
+      <div v-if="stats" class="mb-4 p-3 border rounded bg-light">
+        <h5>Статистика задач</h5>
+        <div class="row g-2">
+          <div class="col-md-2">
+            <strong>Всего:</strong> {{ stats.total }}
+          </div>
+          <div class="col-md-2">
+            <strong>Просрочено:</strong> {{ stats.overdue }}
+          </div>
+          <div class="col-md-3">
+            <strong>По статусу:</strong>
+            <ul class="mb-0 ps-3">
+              <li v-for="(count, status) in stats.by_status" :key="status">
+                {{ getStatusLabel(status) }}: {{ count }}
+              </li>
+            </ul>
+          </div>
+          <div class="col-md-3">
+            <strong>По приоритету:</strong>
+            <ul class="mb-0 ps-3">
+              <li v-for="(count, priority) in stats.by_priority" :key="priority">
+                {{ getPriorityLabel(priority) }}: {{ count }}
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       <div v-if="loading" class="text-center">
@@ -456,14 +405,9 @@ onBeforeMount(async () => {
             <div class="row align-items-center">
               <div class="col-auto">
                 <div v-if="task.picture" class="position-relative">
-                  <img 
-                    :src="task.picture" 
-                    style="max-height: 60px; max-width: 60px;"
-                    class="img-thumbnail clickable-image" 
-                    :alt="`Изображение задачи: ${task.title}`"
-                    @click="openImageViewModal(task.picture)" 
-                    title="Нажмите для увеличения"
-                  >
+                  <img :src="task.picture" style="max-height: 60px; max-width: 60px;"
+                    class="img-thumbnail clickable-image" :alt="`Изображение задачи: ${task.title}`"
+                    @click="openImageViewModal(task.picture)" title="Нажмите для увеличения">
                   <div class="image-hint">Нажмите</div>
                 </div>
                 <div v-else class="text-muted small">
@@ -475,6 +419,12 @@ onBeforeMount(async () => {
                 <h6 class="card-title">{{ task.title }}</h6>
                 <p class="card-text mb-1">{{ task.description }}</p>
                 <small class="text-muted">{{ task.column_name }}</small>
+                <br>
+                <small class="text-muted">Создатель: {{ task.creator_name }}</small>
+                <br>
+                <small class="text-muted">
+                  Исполнитель: {{ task.assignee_name || 'Не назначен' }}
+                </small>
               </div>
 
               <div class="col-md-2">
@@ -508,21 +458,13 @@ onBeforeMount(async () => {
               </div>
 
               <div class="col-md-2 text-end">
-                <button 
-                  type="button" 
-                  class="btn btn-success btn-sm" 
-                  @click="onTaskEditClick(task)"
-                  data-bs-toggle="modal" 
-                  data-bs-target="#editTaskModal"
-                  :aria-label="`Редактировать задачу ${task.title}`"
-                >
+                <button type="button" class="btn btn-success btn-sm" @click="onTaskEditClick(task)"
+                  data-bs-toggle="modal" data-bs-target="#editTaskModal"
+                  :aria-label="`Редактировать задачу ${task.title}`">
                   <i class="bi bi-pencil" aria-hidden="true"></i>
                 </button>
-                <button 
-                  class="btn btn-danger btn-sm ms-1" 
-                  @click="onRemoveClick(task)"
-                  :aria-label="`Удалить задачу ${task.title}`"
-                >
+                <button class="btn btn-danger btn-sm ms-1" @click="onRemoveClick(task)"
+                  :aria-label="`Удалить задачу ${task.title}`">
                   <i class="bi bi-trash" aria-hidden="true"></i>
                 </button>
               </div>
@@ -537,7 +479,8 @@ onBeforeMount(async () => {
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="editTaskModalLabel">Редактировать задачу</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" @click="resetEditModal" aria-label="Закрыть"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" @click="resetEditModal"
+              aria-label="Закрыть"></button>
           </div>
           <div class="modal-body">
             <div class="row g-3">
@@ -545,24 +488,15 @@ onBeforeMount(async () => {
                 <div class="text-center mb-3">
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <p class="text-muted mb-0">Текущее изображение:</p>
-                    <button 
-                      type="button" 
-                      class="btn btn-outline-danger btn-sm" 
-                      @click="removeExistingImage"
-                      title="Удалить изображение"
-                    >
+                    <button type="button" class="btn btn-outline-danger btn-sm" @click="removeExistingImage"
+                      title="Удалить изображение">
                       <i class="bi bi-trash" aria-hidden="true"></i> Удалить
                     </button>
                   </div>
                   <div class="position-relative d-inline-block">
-                    <img 
-                      :src="taskToEdit.picture" 
-                      style="max-height: 100px;" 
-                      class="img-thumbnail clickable-image"
-                      :alt="`Текущее изображение задачи ${taskToEdit.title}`" 
-                      @click="openImageViewModal(taskToEdit.picture)"
-                      title="Нажмите для увеличения"
-                    >
+                    <img :src="taskToEdit.picture" style="max-height: 100px;" class="img-thumbnail clickable-image"
+                      :alt="`Текущее изображение задачи ${taskToEdit.title}`"
+                      @click="openImageViewModal(taskToEdit.picture)" title="Нажмите для увеличения">
                     <div class="image-hint">Нажмите</div>
                   </div>
                   <div v-if="removeImageFlag" class="alert alert-warning mt-2 small">
@@ -575,21 +509,11 @@ onBeforeMount(async () => {
                 <div class="mb-3">
                   <label for="editTaskPicture" class="form-label">Новое изображение</label>
                   <div class="input-group">
-                    <input 
-                      class="form-control" 
-                      type="file" 
-                      id="editTaskPicture"
-                      ref="taskEditPictureRef" 
-                      @change="taskEditPictureChange"
-                      accept="image/*"
-                    >
+                    <input class="form-control" type="file" id="editTaskPicture" ref="taskEditPictureRef"
+                      @change="taskEditPictureChange" accept="image/*">
                     <label class="input-group-text" for="editTaskPicture">Выбрать файл</label>
-                    <button 
-                      v-if="taskEditImageUrl" 
-                      type="button" 
-                      class="btn btn-outline-secondary"
-                      @click="removeEditPicture"
-                    >
+                    <button v-if="taskEditImageUrl" type="button" class="btn btn-outline-secondary"
+                      @click="removeEditPicture">
                       <i class="bi bi-x" aria-hidden="true"></i>
                     </button>
                   </div>
@@ -598,14 +522,9 @@ onBeforeMount(async () => {
                 <div class="text-center mb-3" v-if="taskEditImageUrl && taskEditPictureRef?.files?.length">
                   <p class="text-muted mb-1">Предпросмотр нового изображения:</p>
                   <div class="position-relative d-inline-block">
-                    <img 
-                      :src="taskEditImageUrl" 
-                      style="max-height: 100px;" 
-                      class="img-thumbnail clickable-image"
-                      alt="Предпросмотр нового изображения" 
-                      @click="openImageViewModal(taskEditImageUrl)"
-                      title="Нажмите для увеличения"
-                    >
+                    <img :src="taskEditImageUrl" style="max-height: 100px;" class="img-thumbnail clickable-image"
+                      alt="Предпросмотр нового изображения" @click="openImageViewModal(taskEditImageUrl)"
+                      title="Нажмите для увеличения">
                     <div class="image-hint">Нажмите</div>
                   </div>
                 </div>
@@ -613,25 +532,15 @@ onBeforeMount(async () => {
 
               <div class="col-12">
                 <div class="form-floating">
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    id="editTaskTitle"
-                    v-model="taskToEdit.title" 
-                    required
-                    placeholder="Название задачи"
-                  >
+                  <input type="text" class="form-control" id="editTaskTitle" v-model="taskToEdit.title" required
+                    placeholder="Название задачи">
                   <label for="editTaskTitle">Название задачи</label>
                 </div>
               </div>
 
               <div class="col-12">
                 <div class="form-floating">
-                  <select 
-                    class="form-select" 
-                    id="editTaskColumn"
-                    v-model="taskToEdit.column"
-                  >
+                  <select class="form-select" id="editTaskColumn" v-model="taskToEdit.column">
                     <option :value="col.id" v-for="col in columns">{{ col.name }}</option>
                   </select>
                   <label for="editTaskColumn">Колонка</label>
@@ -640,11 +549,7 @@ onBeforeMount(async () => {
 
               <div class="col-md-6">
                 <div class="form-floating">
-                  <select 
-                    class="form-select" 
-                    id="editTaskStatus"
-                    v-model="taskToEdit.status"
-                  >
+                  <select class="form-select" id="editTaskStatus" v-model="taskToEdit.status">
                     <option :value="status.value" v-for="status in statusOptions">
                       {{ status.label }}
                     </option>
@@ -655,11 +560,7 @@ onBeforeMount(async () => {
 
               <div class="col-md-6">
                 <div class="form-floating">
-                  <select 
-                    class="form-select" 
-                    id="editTaskPriority"
-                    v-model="taskToEdit.priority"
-                  >
+                  <select class="form-select" id="editTaskPriority" v-model="taskToEdit.priority">
                     <option :value="priority.value" v-for="priority in priorityOptions">
                       {{ priority.label }}
                     </option>
@@ -670,46 +571,37 @@ onBeforeMount(async () => {
 
               <div class="col-12">
                 <div class="form-floating">
-                  <input 
-                    type="date" 
-                    class="form-control" 
-                    id="editTaskDueDate"
-                    v-model="taskToEdit.due_date"
-                    placeholder="Срок выполнения"
-                  >
+                  <input type="date" class="form-control" id="editTaskDueDate" v-model="taskToEdit.due_date"
+                    placeholder="Срок выполнения">
                   <label for="editTaskDueDate">Срок выполнения</label>
                 </div>
               </div>
 
               <div class="col-12">
                 <div class="form-floating">
-                  <textarea 
-                    class="form-control" 
-                    id="editTaskDescription"
-                    v-model="taskToEdit.description" 
-                    style="height: 100px"
-                    placeholder="Описание задачи"
-                  ></textarea>
+                  <textarea class="form-control" id="editTaskDescription" v-model="taskToEdit.description"
+                    style="height: 100px" placeholder="Описание задачи"></textarea>
                   <label for="editTaskDescription">Описание</label>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="form-floating">
+                  <select class="form-select" v-model="taskToEdit.assignee">
+                    <option :value="null">Не назначен</option>
+                    <option v-for="user in users" :key="user.user" :value="user.user">
+                      {{ user.username }}
+                    </option>
+                  </select>
+                  <label>Исполнитель</label>
                 </div>
               </div>
             </div>
           </div>
           <div class="modal-footer">
-            <button 
-              type="button" 
-              class="btn btn-secondary" 
-              data-bs-dismiss="modal" 
-              @click="resetEditModal"
-            >
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="resetEditModal">
               Закрыть
             </button>
-            <button 
-              type="button" 
-              class="btn btn-primary" 
-              data-bs-dismiss="modal"
-              @click="onUpdateTask"
-            >
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" @click="onUpdateTask">
               Сохранить
             </button>
           </div>
@@ -717,40 +609,20 @@ onBeforeMount(async () => {
       </div>
     </div>
 
-    <div 
-      class="modal fade" 
-      id="imageViewModal" 
-      tabindex="-1" 
-      style="display: none;"
-      aria-labelledby="imageViewModalLabel"
-      aria-hidden="true"
-    >
+    <div class="modal fade" id="imageViewModal" tabindex="-1" style="display: none;"
+      aria-labelledby="imageViewModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="imageViewModalLabel">Просмотр изображения</h5>
-            <button 
-              type="button" 
-              class="btn-close" 
-              @click="closeImageViewModal"
-              aria-label="Закрыть"
-            ></button>
+            <button type="button" class="btn-close" @click="closeImageViewModal" aria-label="Закрыть"></button>
           </div>
           <div class="modal-body text-center">
-            <img 
-              :src="imageViewUrl" 
-              class="img-fluid" 
-              style="max-height: 70vh; object-fit: contain;"
-              alt="Увеличенное изображение"
-              v-if="imageViewUrl"
-            >
+            <img :src="imageViewUrl" class="img-fluid" style="max-height: 70vh; object-fit: contain;"
+              alt="Увеличенное изображение" v-if="imageViewUrl">
           </div>
           <div class="modal-footer">
-            <button 
-              type="button" 
-              class="btn btn-secondary" 
-              @click="closeImageViewModal"
-            >
+            <button type="button" class="btn btn-secondary" @click="closeImageViewModal">
               Закрыть
             </button>
           </div>

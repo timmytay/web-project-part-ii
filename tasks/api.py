@@ -47,6 +47,13 @@ class ProjectViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModel
 
 
     def perform_create(self, serializer):
+        project = serializer.validated_data.get('project')
+    
+        if project and not self.request.user.is_superuser and project.user != self.request.user:
+            raise serializers.ValidationError(
+                {"project": "Вы не можете создавать задачи в чужих проектах"}
+            )
+    
         if self.request.user.is_superuser:
             user = serializer.validated_data.get('user', self.request.user)
             serializer.save(user=user)
@@ -176,16 +183,89 @@ class TaskViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMix
         serializer.save()
 
     class StatsSerializer(serializers.Serializer):
+        total = serializers.IntegerField()
+        by_status = serializers.DictField(child=serializers.IntegerField())
+        by_priority = serializers.DictField(child=serializers.IntegerField())
+        overdue = serializers.IntegerField()
+        created_week = serializers.IntegerField()
+
+    @action(detail=False, methods=["GET"], url_path="stats")
+    def get_stats(self, request):
+        qs = Task.objects.all()
+        now = timezone.now()
+        week_ago = now - timedelta(days=7)
+
+        stats = {
+            "total": qs.count(),
+            "by_status": dict(
+                qs.values("status").annotate(c=Count("id")).values_list("status", "c")
+            ),
+            "by_priority": dict(
+                qs.values("priority").annotate(c=Count("id")).values_list("priority", "c")
+            ),
+            "overdue": qs.filter(
+                due_date__lt=now,
+                status__in=["todo", "in_progress", "review"]
+            ).count(),
+            "created_week": qs.filter(
+                created_at__gte=week_ago
+            ).count(),
+        }
+
+        serializer = self.StatsSerializer(instance=stats)
+        return Response(serializer.data)
+
+class TimeTrackingViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
+    queryset = TimeTracking.objects.all()
+    serializer_class = TimeTrackingSerializer
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'create', 'destroy']:
+            permission_classes = [IsAuthenticated, SecondFactorPermission]
+        else:
+            permission_classes = []
+        
+        return [permission() for permission in permission_classes]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        
+        user_id = self.request.query_params.get('user_id')
+        task_id = self.request.query_params.get('task_id')
+        project_id = self.request.query_params.get('project_id')
+            
+        if user_id:
+            qs = qs.filter(user_id=user_id)
+        if task_id:
+            qs = qs.filter(task_id=task_id)
+        if project_id:
+            qs = qs.filter(task__column__project_id=project_id)
+
+        qs = qs.order_by('-start_time')
+        return qs
+
+    def perform_create(self, serializer):
+        task = serializer.validated_data.get('task')
+        
+        if not self.request.user.is_superuser and task.column.project.user != self.request.user:
+            raise serializers.ValidationError(
+                {"task": "вы не можете отслеживать время для чужих задач"}
+            )
+        
+        if self.request.user.is_superuser:
+            user = serializer.validated_data.get('user', self.request.user)
+            serializer.save(user=user)
+
+    class StatsSerializer(serializers.Serializer):
         count = serializers.IntegerField()
     
     @action(detail=False, methods=["GET"], url_path="stats")
     def get_stats(self, request, *args, **kwargs):
-        stats = Task.objects.aggregate(
+        stats = TimeTracking.objects.aggregate(
             count = Count("*"),
         )
         serializer = self.StatsSerializer(instance=stats)
         return Response(serializer.data)
-
+    
 class CommentViewSet(GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
                      mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin):
     queryset = Comment.objects.all()

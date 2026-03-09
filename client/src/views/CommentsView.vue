@@ -307,13 +307,11 @@ onBeforeMount(async () => {
 
         <div v-for="comment in filteredComments" :key="comment.id" class="comment-item card mb-2">
           <div class="card-body row align-items-center">
-            <!-- Картинка комментария -->
             <div class="col-auto" v-if="comment.picture">
               <img :src="comment.picture" class="img-thumbnail" style="max-width: 60px; max-height: 60px;"
                 alt="Изображение к комментарию" @click="openImageViewModal(comment.picture)">
             </div>
 
-            <!-- Текст и автор -->
             <div class="col">
               <p class="card-text mb-1">{{ comment.text }}</p>
               <small class="text-muted d-block">Автор: {{ comment.user_name || 'Неизвестный автор' }}</small>
@@ -321,7 +319,6 @@ onBeforeMount(async () => {
               <small class="text-muted d-block">Создан: {{ new Date(comment.created_at).toLocaleString() }}</small>
             </div>
 
-            <!-- Кнопки редактирования/удаления -->
             <div class="col-auto text-end">
               <button type="button" class="btn btn-success btn-sm" @click="onCommentEditClick(comment)"
                 data-bs-toggle="modal" data-bs-target="#editCommentModal">
